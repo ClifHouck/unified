@@ -3,6 +3,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
@@ -14,6 +16,7 @@ func BuildGenerators() error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Built generate_stream_handlers")
 	return nil
 }
 
@@ -23,5 +26,16 @@ func GenerateStreamHandlers() error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Ran generate_stream_handlers")
+	return nil
+}
+
+func Build() error {
+	mg.Deps(GenerateStreamHandlers)
+	err := sh.Run("go", "build")
+	if err != nil {
+		return err
+	}
+	fmt.Println("Built repository")
 	return nil
 }
