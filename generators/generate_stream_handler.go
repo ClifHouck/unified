@@ -7,7 +7,7 @@ import "reflect"
 
 import log "github.com/sirupsen/logrus"
 
-import "github.com/ClifHouck/unified/src/types"
+import "github.com/ClifHouck/unified/types"
 
 type StreamHandlerArguments struct {
 	PackageName         string
@@ -28,8 +28,8 @@ import "sync"
 
 import log "github.com/sirupsen/logrus"
 
-import "github.com/ClifHouck/unified/src/types"
-import "github.com/ClifHouck/unified/src/client"
+import "github.com/ClifHouck/unified/types"
+import "github.com/ClifHouck/unified/client"
 `
 
 const STREAM_HANDLER_STRUCT_BEGIN = `
