@@ -67,7 +67,7 @@ func main() {
 		return
 	}
 
-	streamHandler := NewProtectEventStreamHandler(ctx, eventChan)
+	streamHandler := client.NewProtectEventStreamHandler(ctx, eventChan)
 
 	streamHandler.SetRingEventHandler(func(eventType string, event *types.RingEvent) {
 		if eventType == "add" {
