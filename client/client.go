@@ -312,12 +312,12 @@ func (c *Client) SubscribeProtectEvents(ctx context.Context) (<-chan *ProtectEve
 	return eventChan, nil
 }
 
-type ProtectDeviceMessage struct {
+type ProtectDeviceEventMessage struct {
 	WebSocketMessage
-	Event types.ProtectDeviceUpdate
+	Event types.ProtectDeviceEvent
 }
 
-func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *ProtectDeviceMessage, error) {
+func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *ProtectDeviceEventMessage, error) {
 	url := c.renderUrl(API["protect/subscribe/devices"], []any{})
 	conn, _, err := websocket.Dial(ctx,
 		url,
@@ -334,7 +334,7 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 
 	go c.webSocketKeepAlive(ctx, conn, url)
 
-	eventChan := make(chan *ProtectDeviceMessage)
+	eventChan := make(chan *ProtectDeviceEventMessage)
 
 	go func() {
 		for {
@@ -348,7 +348,7 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 				return
 			}
 
-			var protectDeviceUpdate types.ProtectDeviceUpdate
+			var protectDeviceUpdate types.ProtectDeviceEvent
 			err = json.Unmarshal(data, &protectDeviceUpdate)
 			if err != nil {
 				log.WithFields(log.Fields{
@@ -359,7 +359,7 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 				return
 			}
 
-			eventChan <- &ProtectDeviceMessage{
+			eventChan <- &ProtectDeviceEventMessage{
 				WebSocketMessage: WebSocketMessage{
 					MessageType: messageType,
 					Error:       err,

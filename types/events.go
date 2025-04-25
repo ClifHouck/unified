@@ -197,20 +197,27 @@ var ALL_PROTECT_EVENTS = []interface{}{
 	CameraSmartDetectLoiterEvent{},
 }
 
-// FIXME: This needs work.
-type ProtectDeviceUpdate struct {
+type ProtectDeviceEvent struct {
 	Type string `json:"type"`
-	Item struct {
-		ID               string `json:"id"`
-		Name             string `json:"name"`
-		DoorbellSettings struct {
-			DefaultMessageText           string   `json:"defaultMessageText"`
-			DefaultMessageResetTimeoutMs int      `json:"defaultMessageResetTimeoutMs"`
-			CustomMessages               []string `json:"customMessages"`
-			CustomImages                 []struct {
-				Preview string `json:"preview"`
-				Sprite  string `json:"sprite"`
-			} `json:"customImages"`
-		} `json:"doorbellSettings"`
-	} `json:"item"`
+
+	// Polymorphic object that maps to an Event
+	Item     interface{}     `json:"-"`
+	ItemType string          `json:"-"`
+	RawItem  json.RawMessage `json:"item"`
+}
+
+type ProtectDeviceEventItem struct {
+	ID       string `json:"id"`
+	ModelKey string `json:"modelKey"`
+	Name     string `json:"name"`
+	State    string `json:"state"`
+}
+
+type ProtectAddCameraEvent struct {
+	ProtectDeviceEventItem
+	// FIXME: Add the reset of device events!
+}
+
+var ALL_PROTECT_DEVICE_EVENTS = []interface{}{
+	ProtectAddCameraEvent{},
 }
