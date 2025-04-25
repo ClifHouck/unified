@@ -5,6 +5,7 @@ go 1.23.7
 require (
 	github.com/coder/websocket v1.8.13
 	github.com/gopxl/beep v1.4.1
+	github.com/magefile/mage v1.15.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 )
