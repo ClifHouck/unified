@@ -39,3 +39,14 @@ func Build() error {
 	fmt.Println("Built repository")
 	return nil
 }
+
+func BuildExamples() error {
+	mg.Deps(Build)
+	err := sh.Run("go", "build", "-o", "examples/bin/doorbell",
+		"./examples/main.go")
+	if err != nil {
+		return err
+	}
+	fmt.Println("Built examples")
+	return nil
+}
