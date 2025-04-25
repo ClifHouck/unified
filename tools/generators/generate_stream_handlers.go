@@ -82,14 +82,11 @@ func (esh *{{.StreamType}}StreamHandler) processStream() {
 				log.Error(err.Error())
 			}
 
-			/* Adapt for both subscription types.
 			log.WithFields(log.Fields{
 				"ID":           item.ID,
-				"device":       item.Device,
-				"event.type":   item.Type,
+				"event.type":   message.Event.ItemType,
 				"message.type": message.Event.Type,
 			}).Info("Received {{.StreamType}}")
-			*/
 
 			switch event := message.Event.Item.(type) {
 `
@@ -101,7 +98,7 @@ const PROCESS_STREAM_CASE = `
 
 const PROCESS_STREAM_METHOD_END = `
 			default:
-				log.Error("Unknown type encountered: '%s'", message.Event.ItemType)
+				log.Errorf("Unknown type encountered: '%s'", message.Event.ItemType)
 			}
 
 			if message.Error != nil {
