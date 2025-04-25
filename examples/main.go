@@ -5,8 +5,8 @@ import "time"
 import "os"
 import "context"
 
-import "github.com/ClifHouck/unified/src/client"
-import "github.com/ClifHouck/unified/src/types"
+import "github.com/ClifHouck/unified/client"
+import "github.com/ClifHouck/unified/types"
 
 import "github.com/gopxl/beep"
 import "github.com/gopxl/beep/effects"
