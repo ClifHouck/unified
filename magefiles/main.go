@@ -145,7 +145,7 @@ func Test() error {
 func Clean() error {
 	files := []string{
 		GENERATE_STREAM_HANDLERS_BINARY,
-		// TODO: Should these be check-in or should they always be re-generated?
+		// TODO: Should these be checked-in or should they always be re-generated?
 		"./client/protect_device_update_stream_handler.go",
 		"./client/protect_event_stream_handler.go",
 	}
