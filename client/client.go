@@ -24,6 +24,7 @@ type ApiEndpoint struct {
 	Protocol    string
 }
 
+// TODO: Maybe move this to an api module?
 var API = map[string]*ApiEndpoint{
 	"protect/meta/info": &ApiEndpoint{
 		UrlFragment: "meta/info",

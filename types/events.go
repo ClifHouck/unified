@@ -206,6 +206,8 @@ type ProtectDeviceEvent struct {
 	RawItem  json.RawMessage `json:"item"`
 }
 
+// TODO: func (pde *ProtectDeviceEvent) UnmarshalJSON(data []byte) error {}
+
 type ProtectDeviceEventItem struct {
 	ID       string `json:"id"`
 	ModelKey string `json:"modelKey"`
