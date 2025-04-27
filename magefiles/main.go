@@ -119,6 +119,42 @@ func Build() error {
 	return nil
 }
 
+// Builds the unified CLI command.
+func BuildCmd() error {
+	mg.Deps(Build)
+
+	dest := "build/unified"
+
+	logger := log.WithFields(log.Fields{
+		"destination": dest,
+	})
+
+	// TODO: This surprised me... because even though build was triggered, this
+	// did not rebuild. Which makes sense in retro
+	outOfDate, err := target.Glob(dest,
+		"./cmd/*.go",
+		"./client/*.go",
+		"./types/*.go",
+	)
+	if err != nil {
+		return err
+	}
+
+	if outOfDate {
+		err := sh.Run("go", "build", "-o", "build/unified",
+
+			"./main.go")
+		if err != nil {
+			return err
+		}
+		logger.Info("Built 'unified' cmd.")
+	} else {
+		logger.Info("'unified' up to date.")
+	}
+
+	return nil
+}
+
 // Builds example programs found in './examples'.
 func BuildExamples() error {
 	mg.Deps(Build)

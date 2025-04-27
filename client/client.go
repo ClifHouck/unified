@@ -26,6 +26,24 @@ type ApiEndpoint struct {
 
 // TODO: Maybe move this to an api module?
 var API = map[string]*ApiEndpoint{
+	"network/sites/list": &ApiEndpoint{
+		UrlFragment: "sites",
+		Method:      http.MethodGet,
+		Description: "List local sites managed by this Network application",
+		Application: "network",
+	},
+	"network/devices/list": &ApiEndpoint{
+		UrlFragment: "sites/%s/devices",
+		Method:      http.MethodGet,
+		Description: "List adopted devices of a site",
+		Application: "network",
+	},
+	"network/devices/id": &ApiEndpoint{
+		UrlFragment: "sites/%s/devices/%s",
+		Method:      http.MethodGet,
+		Description: "Get device details",
+		Application: "network",
+	},
 	"protect/meta/info": &ApiEndpoint{
 		UrlFragment: "meta/info",
 		Method:      http.MethodGet,
@@ -136,7 +154,10 @@ func (c *Client) webSocketHeaders() *http.Header {
 }
 
 func (c *Client) renderUrl(endpoint *ApiEndpoint, urlArgs []any) string {
-	renderedFragment := fmt.Sprintf(endpoint.UrlFragment, urlArgs...)
+	renderedFragment := endpoint.UrlFragment
+	if len(urlArgs) > 0 {
+		renderedFragment = fmt.Sprintf(endpoint.UrlFragment, urlArgs...)
+	}
 
 	protocol := "https"
 	if endpoint.Protocol != "" {
@@ -371,4 +392,58 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 	}()
 
 	return eventChan, nil
+}
+
+func (c *Client) ListAllDevices(siteID string) ([]*types.DeviceListEntry, error) {
+	// FIXME: We have to send url query args
+	body, err := c.doRequestArgs(API["network/devices/list"], http.StatusOK, []any{siteID})
+	if err != nil {
+		return nil, err
+	}
+
+	var deviceListPage *types.DeviceListPage
+
+	err = json.Unmarshal(body, &deviceListPage)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME: Deal with pagination!
+
+	return deviceListPage.Data, nil
+
+}
+
+func (c *Client) GetDeviceDetails(siteID string, deviceID string) (*types.Device, error) {
+	body, err := c.doRequestArgs(API["network/devices/id"], http.StatusOK, []any{siteID, deviceID})
+	if err != nil {
+		return nil, err
+	}
+
+	var device *types.Device
+
+	err = json.Unmarshal(body, &device)
+	if err != nil {
+		return nil, err
+	}
+
+	return device, nil
+}
+
+func (c *Client) ListAllSites() ([]*types.Site, error) {
+	body, err := c.doRequest(API["network/sites/list"], http.StatusOK)
+	if err != nil {
+		return nil, err
+	}
+
+	var siteListPage *types.SiteListPage
+
+	err = json.Unmarshal(body, &siteListPage)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME: Deal with pagination!
+
+	return siteListPage.Data, nil
 }
