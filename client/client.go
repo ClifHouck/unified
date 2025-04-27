@@ -5,6 +5,7 @@ import "github.com/ClifHouck/unified/types"
 import "github.com/coder/websocket"
 import log "github.com/sirupsen/logrus"
 
+import "bytes"
 import "context"
 import "errors"
 import "fmt"
@@ -26,6 +27,12 @@ type ApiEndpoint struct {
 
 // TODO: Maybe move this to an api module?
 var API = map[string]*ApiEndpoint{
+	"network/info": &ApiEndpoint{
+		UrlFragment: "info",
+		Method:      http.MethodGet,
+		Description: "Get application information",
+		Application: "network",
+	},
 	"network/sites/list": &ApiEndpoint{
 		UrlFragment: "sites",
 		Method:      http.MethodGet,
@@ -42,6 +49,24 @@ var API = map[string]*ApiEndpoint{
 		UrlFragment: "sites/%s/devices/%s",
 		Method:      http.MethodGet,
 		Description: "Get device details",
+		Application: "network",
+	},
+	"network/devices/id/stats": &ApiEndpoint{
+		UrlFragment: "sites/%s/devices/%s/statistics/latest",
+		Method:      http.MethodGet,
+		Description: "Get latest device statistics",
+		Application: "network",
+	},
+	"network/devices/id/actions": &ApiEndpoint{
+		UrlFragment: "sites/%s/devices/%s/actions",
+		Method:      http.MethodPost,
+		Description: "Execute an action on a device",
+		Application: "network",
+	},
+	"network/clients/list": &ApiEndpoint{
+		UrlFragment: "sites/%s/clients",
+		Method:      http.MethodGet,
+		Description: "List clients of a site",
 		Application: "network",
 	},
 	"protect/meta/info": &ApiEndpoint{
@@ -144,6 +169,7 @@ func (c *Client) headers() *http.Header {
 	headers := &http.Header{}
 	headers.Add("X-API-KEY", c.config.ApiKey)
 	headers.Add("Accept", "application/json")
+	headers.Add("Content-Type", "application/json")
 	return headers
 }
 
@@ -164,7 +190,11 @@ func (c *Client) renderUrl(endpoint *ApiEndpoint, urlArgs []any) string {
 		protocol = endpoint.Protocol
 	}
 
-	return fmt.Sprintf(URL_TEMPLATE, protocol, c.config.Hostname, endpoint.Application, renderedFragment)
+	url := fmt.Sprintf(URL_TEMPLATE, protocol, c.config.Hostname, endpoint.Application, renderedFragment)
+	log.WithFields(log.Fields{
+		"url": url,
+	}).Trace("Rendered url")
+	return url
 }
 
 func (c *Client) doRequest(endpoint *ApiEndpoint, expectedStatus int) ([]byte, error) {
@@ -172,9 +202,13 @@ func (c *Client) doRequest(endpoint *ApiEndpoint, expectedStatus int) ([]byte, e
 }
 
 func (c *Client) doRequestArgs(endpoint *ApiEndpoint, expectedStatus int, urlArgs []any) ([]byte, error) {
+	return c.doRequestArgsAndBody(endpoint, expectedStatus, urlArgs, http.NoBody)
+}
+
+func (c *Client) doRequestArgsAndBody(endpoint *ApiEndpoint, expectedStatus int, urlArgs []any, requestBody io.Reader) ([]byte, error) {
 	renderedUrl := c.renderUrl(endpoint, urlArgs)
 
-	req, err := http.NewRequest(endpoint.Method, renderedUrl, http.NoBody)
+	req, err := http.NewRequest(endpoint.Method, renderedUrl, requestBody)
 	if err != nil {
 		return nil, err
 	}
@@ -190,13 +224,13 @@ func (c *Client) doRequestArgs(endpoint *ApiEndpoint, expectedStatus int, urlArg
 	body, err := io.ReadAll(resp.Body)
 
 	if resp.StatusCode != expectedStatus {
-		return nil, errors.New(fmt.Sprintf("Got bad status %d when requesting '%s'", resp.StatusCode, renderedUrl))
+		return nil, errors.New(fmt.Sprintf("Got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedUrl))
 	}
 
 	log.WithFields(log.Fields{
 		"url":    renderedUrl,
 		"status": resp.StatusCode,
-	}).Info("URL request success")
+	}).Debug("URL request success")
 
 	return body, nil
 }
@@ -394,6 +428,21 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 	return eventChan, nil
 }
 
+func (c *Client) NetworkInfo() (*types.NetworkInfo, error) {
+	body, err := c.doRequest(API["network/info"], http.StatusOK)
+	if err != nil {
+		return nil, err
+	}
+
+	var info types.NetworkInfo
+	err = json.Unmarshal(body, &info)
+	if err != nil {
+		return nil, err
+	}
+
+	return &info, nil
+}
+
 func (c *Client) ListAllDevices(siteID string) ([]*types.DeviceListEntry, error) {
 	// FIXME: We have to send url query args
 	body, err := c.doRequestArgs(API["network/devices/list"], http.StatusOK, []any{siteID})
@@ -430,6 +479,40 @@ func (c *Client) GetDeviceDetails(siteID string, deviceID string) (*types.Device
 	return device, nil
 }
 
+func (c *Client) GetDeviceStats(siteID string, deviceID string) (*types.DeviceStatistics, error) {
+	body, err := c.doRequestArgs(API["network/devices/id/stats"], http.StatusOK, []any{siteID, deviceID})
+	if err != nil {
+		return nil, err
+	}
+
+	var stats *types.DeviceStatistics
+
+	err = json.Unmarshal(body, &stats)
+	if err != nil {
+		return nil, err
+	}
+
+	return stats, nil
+}
+
+func (c *Client) ExecuteDeviceAction(siteID string, deviceID string, action *types.DeviceActionRequest) error {
+	jsonBody, err := json.Marshal(action)
+	log.WithFields(log.Fields{
+		"method": "ExecuteDeviceAction",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	_, err = c.doRequestArgsAndBody(API["network/devices/id/actions"], http.StatusOK,
+		[]any{siteID, deviceID},
+		bodyReader)
+
+	return err
+}
+
 func (c *Client) ListAllSites() ([]*types.Site, error) {
 	body, err := c.doRequest(API["network/sites/list"], http.StatusOK)
 	if err != nil {
@@ -446,4 +529,22 @@ func (c *Client) ListAllSites() ([]*types.Site, error) {
 	// FIXME: Deal with pagination!
 
 	return siteListPage.Data, nil
+}
+
+func (c *Client) ListAllClients(siteID string) ([]*types.Client, error) {
+	body, err := c.doRequestArgs(API["network/clients/list"], http.StatusOK, []any{siteID})
+	if err != nil {
+		return nil, err
+	}
+
+	var clientListPage *types.ClientListPage
+
+	err = json.Unmarshal(body, &clientListPage)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME: Deal with pagination!
+
+	return clientListPage.Data, nil
 }

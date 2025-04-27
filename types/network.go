@@ -4,6 +4,10 @@ import (
 	"time"
 )
 
+type NetworkInfo struct {
+	ApplicationVersion string `json:"applicationVersion"`
+}
+
 type Page struct {
 	Offset     int `json:"offset"`
 	Limit      int `json:"limit"`
@@ -67,6 +71,28 @@ type Device struct {
 	} `json:"interfaces"`
 }
 
+type DeviceStatistics struct {
+	UptimeSec            int64     `json:"uptimeSec"`
+	LastHeartbeatAt      time.Time `json:"lastHeartbeatAt"`
+	NextHeartbeatAt      time.Time `json:"nextHeartbeatAt"`
+	LoadAverage1Min      float64   `json:"loadAverage1Min"`
+	LoadAverage5Min      float64   `json:"loadAverage5Min"`
+	LoadAverage15Min     float64   `json:"loadAverage15Min"`
+	CPUUtilizationPct    float64   `json:"cpuUtilizationPct"`
+	MemoryUtilizationPct float64   `json:"memoryUtilizationPct"`
+	Uplink               struct {
+		TxRateBps int64 `json:"txRateBps"`
+		RxRateBps int64 `json:"rxRateBps"`
+	} `json:"uplink"`
+	Interfaces struct {
+		Radios []struct {
+			// TODO: This differed from UniFi API docs. It's not a string.
+			FrequencyGHz float64 `json:"frequencyGHz"`
+			TxRetriesPct float64 `json:"txRetriesPct"`
+		} `json:"radios"`
+	} `json:"interfaces"`
+}
+
 type SiteListPage struct {
 	Data []*Site `json:"data"`
 	Page
@@ -75,4 +101,20 @@ type SiteListPage struct {
 type Site struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+type ClientListPage struct {
+	Data []*Client `json:"data"`
+	Page
+}
+
+type Client struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	ConnectedAt time.Time `json:"connectedAt"`
+	IPAddress   string    `json:"ipAddress"`
+}
+
+type DeviceActionRequest struct {
+	Action string `json:"action"`
 }

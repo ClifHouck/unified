@@ -4,24 +4,24 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/ClifHouck/unified/client"
 )
 
-// rootCmd represents the base command when called without any subcommands
+var log = logrus.New()
+
 var rootCmd = &cobra.Command{
 	Use:   "unified",
-	Short: "Make Unifi Network or Protect API calls",
-	Long:  `Allows a user to talk to Unifi application APIs.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Short: "Make UniFi Network or Protect API calls",
+	Long:  `Allows a user to talk to UniFi application APIs.`,
 }
 
 var (
@@ -45,14 +45,12 @@ func getClient() *client.Client {
 	return client.NewClient(getClientConfig())
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	rootCmd.AddCommand(networkCmd)
 
 	if apiKey == "" {
 		apiKey = viper.GetString("unifi_api_key")
-		log.Info("Unifi API key set from viper.")
+		log.Debug("UniFi API key set from viper.")
 	}
 
 	err := rootCmd.Execute()
@@ -62,20 +60,40 @@ func Execute() {
 }
 
 func init() {
+	configureLog()
+
 	// Config file.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.unified.yaml)")
 
 	// Universal command flags
 	rootCmd.PersistentFlags().StringVar(&hostname, "host", "unifi",
-		"Hostname of unifi API")
+		"Hostname of UniFi API")
 	rootCmd.PersistentFlags().DurationVar(&keepAliveInterval, "keep-alive-interval", time.Duration(time.Second*30),
 		"Interval between keep-alive pings sent for websocket streams")
 	rootCmd.PersistentFlags().BoolVar(&insecureSkipVerify, "insecure", true,
-		"Skip verification of unifi TLS certificate.")
+		"Skip verification of UniFi TLS certificate.")
 
 	initConfig()
 }
 
 func initConfig() {
+	// TODO: Implement logic to draw client configuration from:
+	// config, then env, then CLI args, in that order.
 	viper.MustBindEnv("UNIFI_API_KEY")
+}
+
+func MarshalAndPrintJSON(v any) error {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(data))
+	return nil
+}
+
+func configureLog() {
+	// TODO: Allow configuration or flag to set logging to different level.
+	log.Level = logrus.InfoLevel
+	log.Out = os.Stderr
 }
