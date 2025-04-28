@@ -109,6 +109,9 @@ func TestUnifiedCmdNetworkGETCommands(t *testing.T) {
 			if tc.NeedsDevice {
 				tc.Command = append(tc.Command, idSet.DeviceID)
 			}
+			if tc.NeedsClient {
+				tc.Command = append(tc.Command, idSet.ClientID)
+			}
 
 			fullCmd := []string{binaryName}
 			fullCmd = append(fullCmd, tc.Command...)
