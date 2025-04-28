@@ -33,12 +33,23 @@ var (
 )
 
 func getClientConfig() *client.Config {
-	return &client.Config{
+	config := &client.Config{
 		Hostname:                   hostname,
 		ApiKey:                     apiKey,
 		WebSocketKeepAliveInterval: keepAliveInterval,
 		InsecureSkipVerify:         insecureSkipVerify,
 	}
+
+	ok, reasons := config.IsValid()
+	if !ok {
+		log.Error("UniFi client configuration is invalid!")
+		for _, reason := range reasons {
+			log.Errorf("Reason: %s", reason)
+		}
+		log.Fatal("Configuration must be fixed in order to use this command.")
+	}
+
+	return config
 }
 
 func getClient() *client.Client {
