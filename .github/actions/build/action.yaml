@@ -1,6 +1,6 @@
-name: Tests 
+name: Build
 author: ClifHouck
-description: Run tests for Unified
+description: Build Unified
 
 runs:
   using: composite
@@ -16,7 +16,9 @@ runs:
         go-version: 1.23.7
         check-latest: true
         cache: false
-  - name: Run tests
+  - name: Build all mage targets
     shell: bash
     run: |
-      mage tests
+       mage build
+       mage buildCmd
+       mage buildExamples
