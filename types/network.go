@@ -113,6 +113,9 @@ type Client struct {
 	Name        string    `json:"name"`
 	ConnectedAt time.Time `json:"connectedAt"`
 	IPAddress   string    `json:"ipAddress"`
+	Type        string    `json:"type"`
+	// TODO: Not sure what 'access' is yet based on API docs.
+	// Access      string    `json:"access"`
 }
 
 type DeviceActionRequest struct {

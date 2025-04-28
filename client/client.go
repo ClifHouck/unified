@@ -18,11 +18,13 @@ import "time"
 const URL_TEMPLATE string = "%s://%s/proxy/%s/integration/v1/%s"
 
 type ApiEndpoint struct {
-	UrlFragment string
-	Method      string
-	Description string
-	Application string
-	Protocol    string
+	UrlFragment    string
+	Method         string
+	Description    string
+	Application    string
+	Protocol       string
+	NumUrlArgs     int
+	HasRequestBody bool
 }
 
 // TODO: Maybe move this to an api module?
@@ -44,30 +46,42 @@ var API = map[string]*ApiEndpoint{
 		Method:      http.MethodGet,
 		Description: "List adopted devices of a site",
 		Application: "network",
+		NumUrlArgs:  1,
 	},
 	"network/devices/id": &ApiEndpoint{
 		UrlFragment: "sites/%s/devices/%s",
 		Method:      http.MethodGet,
 		Description: "Get device details",
 		Application: "network",
+		NumUrlArgs:  2,
 	},
 	"network/devices/id/stats": &ApiEndpoint{
 		UrlFragment: "sites/%s/devices/%s/statistics/latest",
 		Method:      http.MethodGet,
 		Description: "Get latest device statistics",
 		Application: "network",
+		NumUrlArgs:  2,
 	},
 	"network/devices/id/actions": &ApiEndpoint{
 		UrlFragment: "sites/%s/devices/%s/actions",
 		Method:      http.MethodPost,
 		Description: "Execute an action on a device",
 		Application: "network",
+		NumUrlArgs:  2,
 	},
 	"network/clients/list": &ApiEndpoint{
 		UrlFragment: "sites/%s/clients",
 		Method:      http.MethodGet,
 		Description: "List clients of a site",
 		Application: "network",
+		NumUrlArgs:  1,
+	},
+	"network/clients/id": &ApiEndpoint{
+		UrlFragment: "sites/%s/clients/%s",
+		Method:      http.MethodGet,
+		Description: "Get client details",
+		Application: "network",
+		NumUrlArgs:  2,
 	},
 	"protect/meta/info": &ApiEndpoint{
 		UrlFragment: "meta/info",
@@ -100,6 +114,7 @@ var API = map[string]*ApiEndpoint{
 		Method:      http.MethodGet,
 		Description: "Get camera details",
 		Application: "protect",
+		NumUrlArgs:  1,
 	},
 }
 
@@ -181,6 +196,16 @@ func (c *Client) webSocketHeaders() *http.Header {
 
 func (c *Client) renderUrl(endpoint *ApiEndpoint, urlArgs []any) string {
 	renderedFragment := endpoint.UrlFragment
+
+	if endpoint.NumUrlArgs != len(urlArgs) {
+		log.WithFields(log.Fields{
+			"expected_args": endpoint.NumUrlArgs,
+			"actual_args":   len(urlArgs),
+			"urlFragment":   endpoint.UrlFragment,
+		}).Fatal("Number of url arguments does not match number of arguments " +
+			"required by the API endpoint")
+	}
+
 	if len(urlArgs) > 0 {
 		renderedFragment = fmt.Sprintf(endpoint.UrlFragment, urlArgs...)
 	}
@@ -207,6 +232,12 @@ func (c *Client) doRequestArgs(endpoint *ApiEndpoint, expectedStatus int, urlArg
 
 func (c *Client) doRequestArgsAndBody(endpoint *ApiEndpoint, expectedStatus int, urlArgs []any, requestBody io.Reader) ([]byte, error) {
 	renderedUrl := c.renderUrl(endpoint, urlArgs)
+
+	if endpoint.HasRequestBody && requestBody == http.NoBody {
+		log.WithFields(log.Fields{
+			"urlFragment": endpoint.UrlFragment,
+		}).Fatal("Request should have a body but http.NoBody was passed")
+	}
 
 	req, err := http.NewRequest(endpoint.Method, renderedUrl, requestBody)
 	if err != nil {
@@ -547,4 +578,20 @@ func (c *Client) ListAllClients(siteID string) ([]*types.Client, error) {
 	// FIXME: Deal with pagination!
 
 	return clientListPage.Data, nil
+}
+
+func (c *Client) GetClientDetails(siteID string, clientID string) (*types.Client, error) {
+	body, err := c.doRequestArgs(API["network/clients/id"], http.StatusOK, []any{siteID, clientID})
+	if err != nil {
+		return nil, err
+	}
+
+	var client *types.Client
+
+	err = json.Unmarshal(body, &client)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }

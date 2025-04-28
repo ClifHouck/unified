@@ -1,25 +1,38 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/ClifHouck/unified/types"
 )
 
+var idOnly = false
+var listingFlagSet = pflag.NewFlagSet("listing", pflag.ExitOnError)
+
 func init() {
+	listingFlagSet.BoolVar(&idOnly, "id-only", false, "List only the ID of listed entities, one per line.")
+
 	networkCmd.AddCommand(devicesCmd)
 	networkCmd.AddCommand(sitesCmd)
 	networkCmd.AddCommand(clientsCmd)
 	networkCmd.AddCommand(networkInfoCmd)
 
+	listDevicesCmd.Flags().AddFlagSet(listingFlagSet)
 	devicesCmd.AddCommand(listDevicesCmd)
 	devicesCmd.AddCommand(deviceDetailsCmd)
 	devicesCmd.AddCommand(statsDevicesCmd)
 	devicesCmd.AddCommand(actionDevicesCmd)
 
+	listSitesCmd.Flags().AddFlagSet(listingFlagSet)
 	sitesCmd.AddCommand(listSitesCmd)
 
+	listClientsCmd.Flags().AddFlagSet(listingFlagSet)
 	clientsCmd.AddCommand(listClientsCmd)
+	clientsCmd.AddCommand(clientDetailsCmd)
+
 }
 
 var networkCmd = &cobra.Command{
@@ -79,10 +92,14 @@ and prints the results to stdout.`,
 			return
 		}
 		for _, device := range devices {
-			err := MarshalAndPrintJSON(device)
-			if err != nil {
-				log.Error(err.Error())
-				return
+			if idOnly {
+				fmt.Println(device.ID)
+			} else {
+				err := MarshalAndPrintJSON(device)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
 			}
 		}
 	},
@@ -167,10 +184,14 @@ while if option is disabled it will return just the default site.`,
 			return
 		}
 		for _, site := range sites {
-			err := MarshalAndPrintJSON(site)
-			if err != nil {
-				log.Error(err.Error())
-				return
+			if idOnly {
+				fmt.Println(site.ID)
+			} else {
+				err := MarshalAndPrintJSON(site)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
 			}
 		}
 	},
@@ -191,11 +212,34 @@ or active VPN connections.`,
 			return
 		}
 		for _, client := range clients {
-			err := MarshalAndPrintJSON(client)
-			if err != nil {
-				log.Error(err.Error())
-				return
+			if idOnly {
+				fmt.Println(client.ID)
+			} else {
+				err := MarshalAndPrintJSON(client)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
 			}
+		}
+	},
+}
+
+var clientDetailsCmd = &cobra.Command{
+	Use:   "details [site ID] [client ID]",
+	Short: "Get detailed information about a specific connected client",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		client, err := c.GetClientDetails(args[0], args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = MarshalAndPrintJSON(client)
+		if err != nil {
+			log.Error(err.Error())
+			return
 		}
 	},
 }
