@@ -1,0 +1,19 @@
+name: Build
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  build:
+    name: Build Unified 
+    runs-on: fedora-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        uses: ./.github/actions/build/
