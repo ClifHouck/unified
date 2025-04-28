@@ -10,12 +10,15 @@ runs:
     with:
       token: ${{ secrets.ACCESS_TOKEN }}
       path: go/src/github.com/ClifHouck/unified
-  - id: setup-go
+  - name: Setup Go
       uses: actions/setup-go@v5
       with:
         go-version: 1.23.7
         check-latest: true
         cache: false
+  - name: Install dependencies
+        run: |
+          go get .
   - name: Build all mage targets
     shell: bash
     run: |
