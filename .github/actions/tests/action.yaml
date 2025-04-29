@@ -3,7 +3,6 @@ author: ClifHouck
 description: Run tests for Unified
 
 runs:
-  using: composite
   steps:
   - name: Setup Go
       uses: actions/setup-go@v5
