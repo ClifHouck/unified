@@ -13,6 +13,6 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - name: Build
         uses: ./.github/actions/build/
