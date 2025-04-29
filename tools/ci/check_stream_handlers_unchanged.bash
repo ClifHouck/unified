@@ -6,7 +6,7 @@ mkdir -p /tmp/unified/
 
 git diff client/protect_*_stream_handler.go > /tmp/unified/stream_handlers.diff
 
-diff_size=$(wc -c stream_handlers.diff | awk '{print $1}')
+diff_size=$(wc -c /tmp/unified/stream_handlers.diff | awk '{print $1}')
 
 if [ $diff_size == 0 ]; then   
     echo "OK - No difference"; 
