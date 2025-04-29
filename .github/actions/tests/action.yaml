@@ -5,10 +5,6 @@ description: Run tests for Unified
 runs:
   using: composite
   steps:
-  - name: Checkout
-    uses: actions/checkout@v4
-    with: 
-      token: ${{ secrets.ACCESS_TOKEN }}
   - name: Setup Go
       uses: actions/setup-go@v5
       with:
