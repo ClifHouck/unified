@@ -12,5 +12,5 @@ jobs:
       
     steps:
       - uses: actions/checkout@v4.2.2
-      - name: Tests
+      - name: Lint
         uses: ./.github/actions/lint/
