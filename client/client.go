@@ -7,7 +7,6 @@ import log "github.com/sirupsen/logrus"
 
 import "bytes"
 import "context"
-import "errors"
 import "fmt"
 import "io"
 import "encoding/json"
@@ -251,11 +250,23 @@ func (c *Client) doRequestArgsAndBody(endpoint *ApiEndpoint, expectedStatus int,
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"url":    renderedUrl,
+				"status": resp.StatusCode,
+			}).Errorf("Error closing response body: %s", err.Error())
+		}
+	}()
+
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	if resp.StatusCode != expectedStatus {
-		return nil, errors.New(fmt.Sprintf("Got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedUrl))
+		return nil, fmt.Errorf("Got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedUrl)
 	}
 
 	log.WithFields(log.Fields{
