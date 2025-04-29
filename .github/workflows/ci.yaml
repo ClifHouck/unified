@@ -3,15 +3,13 @@ name: CI
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
     tags:
       - 'v*'
   pull_request:
     branches:
       - '**'
   workflow_dispatch:
-
-permissions: {}
 
 jobs:
   build:
