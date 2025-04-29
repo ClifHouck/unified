@@ -15,7 +15,8 @@ runs:
     run: |
       go get .
       go install github.com/magefile/mage@v1.15.0
+      apt-get install alsa-source alsa-tools
   - name: Run tests
     shell: bash
     run: |
-      mage tests
+      mage test
