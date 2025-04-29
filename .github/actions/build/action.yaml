@@ -10,6 +10,7 @@ runs:
       go-version: '1.23.7'
       check-latest: true
   - name: Install dependencies
+    shell: bash
     run: |
       go get .
   - name: Build all mage targets
