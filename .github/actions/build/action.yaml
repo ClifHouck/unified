@@ -10,7 +10,7 @@ runs:
     with:
       go-version: '1.23.7'
       check-latest: true
-  - name: Install alsa 
+  - name: Install alsa for oto (doorbell example)
     shell: bash
     run: |
       sudo apt-get update
