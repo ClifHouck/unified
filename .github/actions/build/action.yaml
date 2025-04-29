@@ -1,0 +1,28 @@
+name: Build
+author: ClifHouck
+description: Build Unified
+
+runs:
+  using: composite
+  steps:
+  - name: Setup Go
+    uses: actions/setup-go@v5
+    with:
+      go-version: '1.23.7'
+      check-latest: true
+  - name: Install alsa for oto (doorbell example)
+    shell: bash
+    run: |
+      sudo apt-get update
+      sudo apt-get install libasound2-dev
+  - name: Install go dependencies
+    shell: bash
+    run: |
+      go get .
+      go install github.com/magefile/mage@v1.15.0
+  - name: Build all mage targets
+    shell: bash
+    run: |
+       mage build
+       mage buildCmd
+       mage buildExamples

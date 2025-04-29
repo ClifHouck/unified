@@ -1,0 +1,16 @@
+name: Build
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    name: Build Unified 
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Build
+        uses: ./.github/actions/build/

@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/build.yaml
+  tests:
+    name: Tests 
+    uses: ./.github/workflows/test.yaml
