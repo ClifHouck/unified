@@ -3,8 +3,6 @@ name: Tests
 on:
   workflow_call:
 
-permissions: {}
-
 jobs:
   build:
     name: Unified Tests

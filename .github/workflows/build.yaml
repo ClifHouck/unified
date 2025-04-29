@@ -3,8 +3,6 @@ name: Build
 on:
   workflow_call:
 
-permissions: {}
-
 jobs:
   build:
     name: Build Unified 
