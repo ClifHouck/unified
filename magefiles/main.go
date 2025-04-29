@@ -169,6 +169,7 @@ func BuildExamples() error {
 
 // Runs tests.
 func Test() error {
+	mg.Deps(GenerateStreamHandlers)
 	err := sh.RunV("go", "test", "./...")
 	if err != nil {
 		return err
