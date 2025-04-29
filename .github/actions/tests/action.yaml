@@ -14,6 +14,7 @@ runs:
     shell: bash
     run: |
       go get .
+      go install github.com/magefile/mage@v1.15.0
   - name: Run tests
     shell: bash
     run: |
