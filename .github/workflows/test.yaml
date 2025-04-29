@@ -13,5 +13,6 @@ jobs:
       fail-fast: false
       
     steps:
+      - uses: actions/checkout@v4
       - name: Tests
         uses: ./.github/actions/tests/
