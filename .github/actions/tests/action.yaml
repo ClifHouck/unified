@@ -10,12 +10,11 @@ runs:
     with:
       go-version: '1.23.7'
       check-latest: true
-  - name: Install dependencies
+  - name: Install go dependencies
     shell: bash
     run: |
       go get .
       go install github.com/magefile/mage@v1.15.0
-      apt-get install alsa-source alsa-tools
   - name: Run tests
     shell: bash
     run: |
