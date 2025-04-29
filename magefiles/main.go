@@ -208,3 +208,13 @@ func Clean() error {
 	}
 	return nil
 }
+
+// Run the linter
+func Lint() error {
+	err := sh.RunV("golangci-lint", "run")
+	if err != nil {
+		return err
+	}
+	log.Info("Ran linter.")
+	return nil
+}

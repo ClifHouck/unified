@@ -94,8 +94,17 @@ func LoadMP3(filename string) (beep.StreamSeekCloser, *beep.Format, error) {
 }
 
 func PlayDingDong(streamer beep.StreamSeekCloser, format *beep.Format) {
-	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-	streamer.Seek(0)
+	err := speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+	if err != nil {
+		log.Errorf("PlayDingDong: speaker.Init failed with error: %s", err.Error())
+		return
+	}
+
+	err = streamer.Seek(0)
+	if err != nil {
+		log.Errorf("PlayDingDong: streamer.Seek failed with error: %s", err.Error())
+		return
+	}
 
 	ctrl := &beep.Ctrl{Streamer: streamer, Paused: false}
 	volume := &effects.Volume{

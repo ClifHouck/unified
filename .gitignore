@@ -1,4 +1,3 @@
-client/*_stream_handler.go
 build/
 bin/
 *.key

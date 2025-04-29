@@ -1,0 +1,16 @@
+name: Tests
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    name: Unified Lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Lint
+        uses: ./.github/actions/lint/

@@ -1,0 +1,21 @@
+name: Lint
+author: ClifHouck
+description: Run golangci-lint on Unified
+
+runs:
+  using: composite
+  steps:
+  - uses: actions/setup-go@v5
+  - name: Install alsa for oto (doorbell example)
+    shell: bash
+    run: |
+      sudo apt-get update
+      sudo apt-get install libasound2-dev
+  - name: Install go dependencies
+    shell: bash
+    run: |
+      go get .
+      go install github.com/magefile/mage@v1.15.0
+  - uses: golangci/golangci-lint-action@v7
+    with: 
+      version: latest
