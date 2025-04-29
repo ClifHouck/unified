@@ -7,10 +7,6 @@ runs:
   steps:
   - name: Checkout
     uses: actions/checkout@v4
-    with:
-      repository: ClifHouck/unified
-      token: ${{ secrets.ACCESS_TOKEN }}
-      path: unified
   - name: Setup Go
       uses: actions/setup-go@v5
       with:
