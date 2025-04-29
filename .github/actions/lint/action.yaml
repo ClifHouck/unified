@@ -1,0 +1,10 @@
+name: Lint
+author: ClifHouck
+description: Run golangci-lint on Unified
+
+runs:
+  using: composite
+  steps:
+  - uses: golangci/golangci-lint-action@v7
+    with: 
+      version: latest

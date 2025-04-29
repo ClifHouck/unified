@@ -18,3 +18,6 @@ jobs:
   tests:
     name: Tests 
     uses: ./.github/workflows/test.yaml
+  lint:
+    name: Lint
+    uses: ./.github/workflows/lint.yaml
