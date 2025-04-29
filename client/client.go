@@ -266,7 +266,7 @@ func (c *Client) doRequestArgsAndBody(endpoint *ApiEndpoint, expectedStatus int,
 	}
 
 	if resp.StatusCode != expectedStatus {
-		return nil, fmt.Errorf("Got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedUrl)
+		return nil, fmt.Errorf("got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedUrl)
 	}
 
 	log.WithFields(log.Fields{
