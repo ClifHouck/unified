@@ -20,9 +20,13 @@ runs:
     run: |
       go get .
       go install github.com/magefile/mage@v1.15.0
+  - name: Check that stream handlers are up to date
+    shell: bash
+    run: |
+      ./tools/ci/check_stream_handlers_unchanged.bash
   - name: Build all mage targets
     shell: bash
     run: |
        mage build
        mage buildCmd
-       mage buildExamples
+       mage buildExampleskjj
