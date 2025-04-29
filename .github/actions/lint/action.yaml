@@ -5,6 +5,7 @@ description: Run golangci-lint on Unified
 runs:
   using: composite
   steps:
+  - uses: actions/setup-go@v5
   - uses: golangci/golangci-lint-action@v7
     with: 
       version: latest
