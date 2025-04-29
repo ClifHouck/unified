@@ -3,6 +3,7 @@ author: ClifHouck
 description: Build Unified
 
 runs:
+  using: composite
   steps:
   - name: Setup Go
     uses: actions/setup-go@v5
