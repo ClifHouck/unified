@@ -1,88 +1,160 @@
 package client
 
-import "github.com/ClifHouck/unified/types"
-
-import "github.com/coder/websocket"
-import log "github.com/sirupsen/logrus"
-
+import "strconv"
 import "bytes"
 import "context"
+import "crypto/tls"
+import "encoding/json"
 import "fmt"
 import "io"
-import "encoding/json"
 import "net/http"
-import "crypto/tls"
+import "net/url"
 import "time"
+
+import "github.com/coder/websocket"
+import "github.com/sirupsen/logrus"
+
+import "github.com/ClifHouck/unified/types"
 
 const URL_TEMPLATE string = "%s://%s/proxy/%s/integration/v1/%s"
 
 type ApiEndpoint struct {
 	UrlFragment    string
 	Method         string
+	ExpectedStatus int
 	Description    string
 	Application    string
 	Protocol       string
 	NumUrlArgs     int
+	NumQueryArgs   int
 	HasRequestBody bool
 }
 
 // TODO: Maybe move this to an api module?
-var API = map[string]*ApiEndpoint{
-	"network/info": &ApiEndpoint{
+var networkAPI = map[string]*ApiEndpoint{
+	// Application related
+	"Info": &ApiEndpoint{
 		UrlFragment: "info",
 		Method:      http.MethodGet,
 		Description: "Get application information",
 		Application: "network",
 	},
-	"network/sites/list": &ApiEndpoint{
+
+	// Site related
+	"Sites": &ApiEndpoint{
 		UrlFragment: "sites",
 		Method:      http.MethodGet,
 		Description: "List local sites managed by this Network application",
 		Application: "network",
 	},
-	"network/devices/list": &ApiEndpoint{
-		UrlFragment: "sites/%s/devices",
-		Method:      http.MethodGet,
-		Description: "List adopted devices of a site",
-		Application: "network",
-		NumUrlArgs:  1,
+
+	/// Client related
+	"Clients": &ApiEndpoint{
+		UrlFragment:  "sites/%s/clients",
+		Method:       http.MethodGet,
+		Description:  "List clients of a site",
+		Application:  "network",
+		NumUrlArgs:   1,
+		NumQueryArgs: 1,
 	},
-	"network/devices/id": &ApiEndpoint{
-		UrlFragment: "sites/%s/devices/%s",
-		Method:      http.MethodGet,
-		Description: "Get device details",
-		Application: "network",
-		NumUrlArgs:  2,
-	},
-	"network/devices/id/stats": &ApiEndpoint{
-		UrlFragment: "sites/%s/devices/%s/statistics/latest",
-		Method:      http.MethodGet,
-		Description: "Get latest device statistics",
-		Application: "network",
-		NumUrlArgs:  2,
-	},
-	"network/devices/id/actions": &ApiEndpoint{
-		UrlFragment: "sites/%s/devices/%s/actions",
-		Method:      http.MethodPost,
-		Description: "Execute an action on a device",
-		Application: "network",
-		NumUrlArgs:  2,
-	},
-	"network/clients/list": &ApiEndpoint{
-		UrlFragment: "sites/%s/clients",
-		Method:      http.MethodGet,
-		Description: "List clients of a site",
-		Application: "network",
-		NumUrlArgs:  1,
-	},
-	"network/clients/id": &ApiEndpoint{
+	"ClientDetails": &ApiEndpoint{
 		UrlFragment: "sites/%s/clients/%s",
 		Method:      http.MethodGet,
 		Description: "Get client details",
 		Application: "network",
 		NumUrlArgs:  2,
 	},
-	"protect/meta/info": &ApiEndpoint{
+	"ClientExecuteAction": &ApiEndpoint{
+		UrlFragment: "sites/%s/devices/%s/actions",
+		Method:      http.MethodPost,
+		Description: "Execute an action on a device",
+		Application: "network",
+		NumUrlArgs:  2,
+	},
+
+	// Devices related
+	"Devices": &ApiEndpoint{
+		UrlFragment: "sites/%s/devices",
+		Method:      http.MethodGet,
+		Description: "List adopted devices of a site",
+		Application: "network",
+		NumUrlArgs:  1,
+	},
+	"DeviceDetails": &ApiEndpoint{
+		UrlFragment: "sites/%s/devices/%s",
+		Method:      http.MethodGet,
+		Description: "Get device details",
+		Application: "network",
+		NumUrlArgs:  2,
+	},
+	"DeviceStatistics": &ApiEndpoint{
+		UrlFragment: "sites/%s/devices/%s/statistics/latest",
+		Method:      http.MethodGet,
+		Description: "Get latest device statistics",
+		Application: "network",
+		NumUrlArgs:  2,
+	},
+	"DeviceExecuteAction": &ApiEndpoint{
+		UrlFragment:    "sites/%s/devices/%s/actions",
+		Method:         http.MethodPost,
+		Description:    "Execute an action on a device",
+		Application:    "network",
+		NumUrlArgs:     2,
+		HasRequestBody: true,
+	},
+	"DevicePortExecuteAction": &ApiEndpoint{
+		UrlFragment:    "sites/%s/devices/%s/actions",
+		Method:         http.MethodPost,
+		Description:    "Execute an action on a device",
+		Application:    "network",
+		NumUrlArgs:     3,
+		HasRequestBody: true,
+	},
+
+	// Voucher related
+	"Vouchers": &ApiEndpoint{
+		UrlFragment:  "sites/%s/hotspot/vouchers",
+		Method:       http.MethodGet,
+		Description:  "List vouchers of a site",
+		Application:  "network",
+		NumUrlArgs:   1,
+		NumQueryArgs: 3,
+	},
+	"VoucherDetails": &ApiEndpoint{
+		UrlFragment: "sites/%s/vouchers/%s",
+		Method:      http.MethodGet,
+		Description: "Get voucher details",
+		Application: "network",
+		NumUrlArgs:  2,
+	},
+	"VoucherGenerate": &ApiEndpoint{
+		UrlFragment:    "sites/%s/hotspot/vouchers",
+		Method:         http.MethodPost,
+		ExpectedStatus: http.StatusCreated,
+		Description:    "Generate vouchers",
+		Application:    "network",
+		NumUrlArgs:     1,
+		HasRequestBody: true,
+	},
+	"VoucherDelete": &ApiEndpoint{
+		UrlFragment: "sites/%s/hotspot/vouchers/%s",
+		Method:      http.MethodDelete,
+		Description: "Delete vouchers",
+		Application: "network",
+		NumUrlArgs:  2,
+	},
+	"VoucherDeleteByFilter": &ApiEndpoint{
+		UrlFragment:  "sites/%s/hotspot/vouchers",
+		Method:       http.MethodDelete,
+		Description:  "Delete vouchers by filter",
+		Application:  "network",
+		NumUrlArgs:   1,
+		NumQueryArgs: 1,
+	},
+}
+
+var protectAPI = map[string]*ApiEndpoint{
+	"Info": &ApiEndpoint{
 		UrlFragment: "meta/info",
 		Method:      http.MethodGet,
 		Description: "Get application information",
@@ -161,14 +233,29 @@ func (c *Config) IsValid() (valid bool, reasons []string) {
 }
 
 type Client struct {
+	ctx    context.Context
 	config *Config
 	client *http.Client
+
+	log *logrus.Logger
+
+	Network types.NetworkV1
+	Protect types.ProtectV1
 }
 
-// FIXME: Client-wide context
-func NewClient(config *Config) *Client {
-	return &Client{
+type networkV1Client struct {
+	client *Client
+}
+
+type protectV1Client struct {
+	client *Client
+}
+
+func NewClient(ctx context.Context, config *Config, log *logrus.Logger) *Client {
+	client := &Client{
+		ctx:    ctx,
 		config: config,
+		log:    log,
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -177,6 +264,9 @@ func NewClient(config *Config) *Client {
 			},
 		},
 	}
+	client.Network = &networkV1Client{client: client}
+	client.Protect = &protectV1Client{client: client}
+	return client
 }
 
 func (c *Client) headers() *http.Header {
@@ -193,59 +283,67 @@ func (c *Client) webSocketHeaders() *http.Header {
 	return headers
 }
 
-func (c *Client) renderUrl(endpoint *ApiEndpoint, urlArgs []any) string {
-	renderedFragment := endpoint.UrlFragment
+type requestArgs struct {
+	Endpoint     *ApiEndpoint
+	UrlArguments []any
+	RequestBody  io.Reader
+	Query        *url.Values
+}
 
-	if endpoint.NumUrlArgs != len(urlArgs) {
-		log.WithFields(log.Fields{
-			"expected_args": endpoint.NumUrlArgs,
-			"actual_args":   len(urlArgs),
-			"urlFragment":   endpoint.UrlFragment,
+func (c *Client) renderUrl(req *requestArgs) string {
+	renderedFragment := req.Endpoint.UrlFragment
+
+	if req.Endpoint.NumUrlArgs != len(req.UrlArguments) {
+		c.log.WithFields(logrus.Fields{
+			"expected_args": req.Endpoint.NumUrlArgs,
+			"actual_args":   len(req.UrlArguments),
+			"urlFragment":   req.Endpoint.UrlFragment,
 		}).Fatal("Number of url arguments does not match number of arguments " +
 			"required by the API endpoint")
 	}
 
-	if len(urlArgs) > 0 {
-		renderedFragment = fmt.Sprintf(endpoint.UrlFragment, urlArgs...)
+	if len(req.UrlArguments) > 0 {
+		renderedFragment = fmt.Sprintf(req.Endpoint.UrlFragment, req.UrlArguments...)
 	}
 
 	protocol := "https"
-	if endpoint.Protocol != "" {
-		protocol = endpoint.Protocol
+	if req.Endpoint.Protocol != "" {
+		protocol = req.Endpoint.Protocol
 	}
 
-	url := fmt.Sprintf(URL_TEMPLATE, protocol, c.config.Hostname, endpoint.Application, renderedFragment)
-	log.WithFields(log.Fields{
+	url := fmt.Sprintf(URL_TEMPLATE, protocol, c.config.Hostname, req.Endpoint.Application, renderedFragment)
+
+	// TODO: Some sort of sanity checking on number & keys of query args...
+	if req.Query != nil {
+		encodedQuery := req.Query.Encode()
+		if len(encodedQuery) > 0 {
+			url = url + "?" + encodedQuery
+		}
+	}
+
+	c.log.WithFields(logrus.Fields{
 		"url": url,
 	}).Trace("Rendered url")
 	return url
 }
 
-func (c *Client) doRequest(endpoint *ApiEndpoint, expectedStatus int) ([]byte, error) {
-	return c.doRequestArgs(endpoint, expectedStatus, []any{})
-}
+func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
+	renderedUrl := c.renderUrl(req)
 
-func (c *Client) doRequestArgs(endpoint *ApiEndpoint, expectedStatus int, urlArgs []any) ([]byte, error) {
-	return c.doRequestArgsAndBody(endpoint, expectedStatus, urlArgs, http.NoBody)
-}
-
-func (c *Client) doRequestArgsAndBody(endpoint *ApiEndpoint, expectedStatus int, urlArgs []any, requestBody io.Reader) ([]byte, error) {
-	renderedUrl := c.renderUrl(endpoint, urlArgs)
-
-	if endpoint.HasRequestBody && requestBody == http.NoBody {
-		log.WithFields(log.Fields{
-			"urlFragment": endpoint.UrlFragment,
+	if req.Endpoint.HasRequestBody && req.RequestBody == http.NoBody {
+		c.log.WithFields(logrus.Fields{
+			"urlFragment": req.Endpoint.UrlFragment,
 		}).Fatal("Request should have a body but http.NoBody was passed")
 	}
 
-	req, err := http.NewRequest(endpoint.Method, renderedUrl, requestBody)
+	request, err := http.NewRequest(req.Endpoint.Method, renderedUrl, req.RequestBody)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header = *c.headers()
+	request.Header = *c.headers()
 
-	resp, err := c.client.Do(req)
+	resp, err := c.client.Do(request)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +351,7 @@ func (c *Client) doRequestArgsAndBody(endpoint *ApiEndpoint, expectedStatus int,
 	defer func() {
 		err := resp.Body.Close()
 		if err != nil {
-			log.WithFields(log.Fields{
+			c.log.WithFields(logrus.Fields{
 				"url":    renderedUrl,
 				"status": resp.StatusCode,
 			}).Errorf("Error closing response body: %s", err.Error())
@@ -265,11 +363,26 @@ func (c *Client) doRequestArgsAndBody(endpoint *ApiEndpoint, expectedStatus int,
 		return nil, err
 	}
 
+	expectedStatus := req.Endpoint.ExpectedStatus
+	if expectedStatus == 0 {
+		expectedStatus = http.StatusOK
+	}
+
 	if resp.StatusCode != expectedStatus {
+		var unifiError types.Error
+		err = json.Unmarshal(body, &unifiError)
+		if err == nil && unifiError.StatusCode != 0 {
+			c.log.WithFields(logrus.Fields{
+				"code":    unifiError.StatusCode,
+				"name":    unifiError.StatusName,
+				"message": unifiError.Message,
+			}).Errorf("UniFi application returned an error")
+		}
+
 		return nil, fmt.Errorf("got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedUrl)
 	}
 
-	log.WithFields(log.Fields{
+	c.log.WithFields(logrus.Fields{
 		"url":    renderedUrl,
 		"status": resp.StatusCode,
 	}).Debug("URL request success")
@@ -277,8 +390,8 @@ func (c *Client) doRequestArgsAndBody(endpoint *ApiEndpoint, expectedStatus int,
 	return body, nil
 }
 
-func (c *Client) ProtectInfo() (*types.ProtectInfo, error) {
-	body, err := c.doRequest(API["protect/meta/info"], http.StatusOK)
+func (pc *protectV1Client) Info() (*types.ProtectInfo, error) {
+	body, err := pc.client.doRequest(&requestArgs{Endpoint: protectAPI["Info"]})
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +406,7 @@ func (c *Client) ProtectInfo() (*types.ProtectInfo, error) {
 }
 
 func (c *Client) GetCameras() ([]*types.Camera, error) {
-	body, err := c.doRequest(API["protect/cameras"], http.StatusOK)
+	body, err := c.doRequest(&requestArgs{Endpoint: protectAPI["protect/cameras"]})
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +422,10 @@ func (c *Client) GetCameras() ([]*types.Camera, error) {
 }
 
 func (c *Client) GetCameraDetails(cameraID string) (*types.Camera, error) {
-	body, err := c.doRequestArgs(API["protect/camera/id"], http.StatusOK, []any{cameraID})
+	body, err := c.doRequest(&requestArgs{
+		Endpoint:     protectAPI["protect/camera/id"],
+		UrlArguments: []any{cameraID},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -342,13 +458,13 @@ func (c *Client) webSocketKeepAlive(ctx context.Context, conn *websocket.Conn, u
 	for next := range tickChan {
 		err := conn.Ping(ctx)
 		if err != nil {
-			log.WithFields(log.Fields{
+			c.log.WithFields(logrus.Fields{
 				"url":   url,
 				"error": err.Error(),
 			}).Error("WebSocket.Ping returned error")
 			return
 		}
-		log.WithFields(log.Fields{
+		c.log.WithFields(logrus.Fields{
 			"url":          url,
 			"next_ping_at": next,
 		}).Debug("WebSocket.Ping (Keep-Alive) Success")
@@ -356,7 +472,9 @@ func (c *Client) webSocketKeepAlive(ctx context.Context, conn *websocket.Conn, u
 }
 
 func (c *Client) SubscribeProtectEvents(ctx context.Context) (<-chan *ProtectEventMessage, error) {
-	url := c.renderUrl(API["protect/subscribe/events"], []any{})
+	url := c.renderUrl(&requestArgs{
+		Endpoint: protectAPI["protect/subscribe/events"],
+	})
 	conn, _, err := websocket.Dial(ctx,
 		url,
 		&websocket.DialOptions{
@@ -366,7 +484,7 @@ func (c *Client) SubscribeProtectEvents(ctx context.Context) (<-chan *ProtectEve
 		return nil, err
 	}
 
-	log.WithFields(log.Fields{
+	c.log.WithFields(logrus.Fields{
 		"url": url,
 	}).Info("WebSocket.Dial() success")
 
@@ -378,7 +496,7 @@ func (c *Client) SubscribeProtectEvents(ctx context.Context) (<-chan *ProtectEve
 		for {
 			messageType, data, err := conn.Read(ctx)
 			if err != nil {
-				log.WithFields(log.Fields{
+				c.log.WithFields(logrus.Fields{
 					"url":   url,
 					"error": err.Error(),
 				}).Error("WebSocket Read returned error")
@@ -389,7 +507,7 @@ func (c *Client) SubscribeProtectEvents(ctx context.Context) (<-chan *ProtectEve
 			var protectEvent types.ProtectEvent
 			err = json.Unmarshal(data, &protectEvent)
 			if err != nil {
-				log.WithFields(log.Fields{
+				c.log.WithFields(logrus.Fields{
 					"url":   url,
 					"error": err.Error(),
 				}).Error("json.Unmarshal returned error")
@@ -416,7 +534,9 @@ type ProtectDeviceEventMessage struct {
 }
 
 func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *ProtectDeviceEventMessage, error) {
-	url := c.renderUrl(API["protect/subscribe/devices"], []any{})
+	url := c.renderUrl(&requestArgs{
+		Endpoint: protectAPI["protect/subscribe/devices"],
+	})
 	conn, _, err := websocket.Dial(ctx,
 		url,
 		&websocket.DialOptions{
@@ -426,7 +546,7 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 		return nil, err
 	}
 
-	log.WithFields(log.Fields{
+	c.log.WithFields(logrus.Fields{
 		"url": url,
 	}).Info("WebSocket Dial Success")
 
@@ -438,7 +558,7 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 		for {
 			messageType, data, err := conn.Read(ctx)
 			if err != nil {
-				log.WithFields(log.Fields{
+				c.log.WithFields(logrus.Fields{
 					"url":   url,
 					"error": err.Error(),
 				}).Error("json.Unmarshal returned error")
@@ -449,7 +569,7 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 			var protectDeviceUpdate types.ProtectDeviceEvent
 			err = json.Unmarshal(data, &protectDeviceUpdate)
 			if err != nil {
-				log.WithFields(log.Fields{
+				c.log.WithFields(logrus.Fields{
 					"url":   url,
 					"error": err.Error(),
 				}).Error("json.Unmarshal returned error")
@@ -470,8 +590,28 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 	return eventChan, nil
 }
 
-func (c *Client) NetworkInfo() (*types.NetworkInfo, error) {
-	body, err := c.doRequest(API["network/info"], http.StatusOK)
+func buildQuery(filter types.Filter, pageArgs *types.PageArguments) *url.Values {
+	query := &url.Values{}
+	filterStr := string(filter)
+	if len(filterStr) > 0 {
+		query.Add("filter", string(filter))
+	}
+	if pageArgs != nil {
+		if pageArgs.Limit != 0 {
+			query.Add("limit", strconv.FormatUint(uint64(pageArgs.Limit), 10))
+
+		}
+		if pageArgs.Offset != 0 {
+			query.Add("offset", strconv.FormatUint(uint64(pageArgs.Offset), 10))
+		}
+	}
+	return query
+}
+
+func (nc *networkV1Client) Info() (*types.NetworkInfo, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint: networkAPI["Info"],
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -485,9 +625,90 @@ func (c *Client) NetworkInfo() (*types.NetworkInfo, error) {
 	return &info, nil
 }
 
-func (c *Client) ListAllDevices(siteID string) ([]*types.DeviceListEntry, error) {
-	// FIXME: We have to send url query args
-	body, err := c.doRequestArgs(API["network/devices/list"], http.StatusOK, []any{siteID})
+func (nc *networkV1Client) Sites(filter types.Filter, pageArgs *types.PageArguments) ([]*types.Site, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint: networkAPI["Sites"],
+		Query:    buildQuery(filter, pageArgs),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var siteListPage *types.SiteListPage
+
+	err = json.Unmarshal(body, &siteListPage)
+	if err != nil {
+		return nil, err
+	}
+
+	return siteListPage.Data, nil
+}
+
+func (nc *networkV1Client) Clients(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Client, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["Clients"],
+		UrlArguments: []any{siteID},
+		Query:        buildQuery(filter, pageArgs),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var clientListPage *types.ClientListPage
+
+	err = json.Unmarshal(body, &clientListPage)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientListPage.Data, nil
+}
+
+func (nc *networkV1Client) ClientDetails(siteID types.SiteID, clientID types.ClientID) (*types.Client, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["ClientDetails"],
+		UrlArguments: []any{siteID, clientID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var client *types.Client
+
+	err = json.Unmarshal(body, &client)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func (nc *networkV1Client) ClientExecuteAction(siteID types.SiteID, clientID types.ClientID, action *types.ClientActionRequest) error {
+	jsonBody, err := json.Marshal(action)
+	nc.client.log.WithFields(logrus.Fields{
+		"method": "ClientExecuteAction",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	_, err = nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["ClientExecuteAction"],
+		UrlArguments: []any{siteID, clientID},
+		RequestBody:  bodyReader,
+	})
+
+	return err
+}
+
+func (nc *networkV1Client) Devices(siteID types.SiteID, pageArgs *types.PageArguments) ([]*types.DeviceListEntry, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["Devices"],
+		UrlArguments: []any{siteID},
+		Query:        buildQuery(types.Filter(""), pageArgs),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -499,14 +720,14 @@ func (c *Client) ListAllDevices(siteID string) ([]*types.DeviceListEntry, error)
 		return nil, err
 	}
 
-	// FIXME: Deal with pagination!
-
 	return deviceListPage.Data, nil
-
 }
 
-func (c *Client) GetDeviceDetails(siteID string, deviceID string) (*types.Device, error) {
-	body, err := c.doRequestArgs(API["network/devices/id"], http.StatusOK, []any{siteID, deviceID})
+func (nc *networkV1Client) DeviceDetails(siteID types.SiteID, deviceID types.DeviceID) (*types.Device, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["DeviceDetails"],
+		UrlArguments: []any{siteID, deviceID},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -521,8 +742,11 @@ func (c *Client) GetDeviceDetails(siteID string, deviceID string) (*types.Device
 	return device, nil
 }
 
-func (c *Client) GetDeviceStats(siteID string, deviceID string) (*types.DeviceStatistics, error) {
-	body, err := c.doRequestArgs(API["network/devices/id/stats"], http.StatusOK, []any{siteID, deviceID})
+func (nc *networkV1Client) DeviceStatistics(siteID types.SiteID, deviceID types.DeviceID) (*types.DeviceStatistics, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["DeviceStatistics"],
+		UrlArguments: []any{siteID, deviceID},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -537,10 +761,10 @@ func (c *Client) GetDeviceStats(siteID string, deviceID string) (*types.DeviceSt
 	return stats, nil
 }
 
-func (c *Client) ExecuteDeviceAction(siteID string, deviceID string, action *types.DeviceActionRequest) error {
+func (nc *networkV1Client) DeviceExecuteAction(siteID types.SiteID, deviceID types.DeviceID, action *types.DeviceActionRequest) error {
 	jsonBody, err := json.Marshal(action)
-	log.WithFields(log.Fields{
-		"method": "ExecuteDeviceAction",
+	nc.client.log.WithFields(logrus.Fields{
+		"method": "DeviceExecuteAction",
 		"body":   string(jsonBody),
 	}).Trace("Request body")
 	if err != nil {
@@ -548,61 +772,144 @@ func (c *Client) ExecuteDeviceAction(siteID string, deviceID string, action *typ
 	}
 
 	bodyReader := bytes.NewReader(jsonBody)
-	_, err = c.doRequestArgsAndBody(API["network/devices/id/actions"], http.StatusOK,
-		[]any{siteID, deviceID},
-		bodyReader)
+	_, err = nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["DeviceExecuteAction"],
+		UrlArguments: []any{siteID, deviceID},
+		RequestBody:  bodyReader,
+	})
 
 	return err
 }
 
-func (c *Client) ListAllSites() ([]*types.Site, error) {
-	body, err := c.doRequest(API["network/sites/list"], http.StatusOK)
+func (nc *networkV1Client) DevicePortExecuteAction(siteID types.SiteID, deviceID types.DeviceID, port types.PortIdx, action *types.DevicePortActionRequest) error {
+	jsonBody, err := json.Marshal(action)
+	nc.client.log.WithFields(logrus.Fields{
+		"method": "DevicePortExecuteAction",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var siteListPage *types.SiteListPage
+	bodyReader := bytes.NewReader(jsonBody)
+	_, err = nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["DevicePortExecuteAction"],
+		UrlArguments: []any{siteID, deviceID},
+		RequestBody:  bodyReader,
+	})
 
-	err = json.Unmarshal(body, &siteListPage)
-	if err != nil {
-		return nil, err
-	}
-
-	// FIXME: Deal with pagination!
-
-	return siteListPage.Data, nil
+	return err
 }
 
-func (c *Client) ListAllClients(siteID string) ([]*types.Client, error) {
-	body, err := c.doRequestArgs(API["network/clients/list"], http.StatusOK, []any{siteID})
+func (nc *networkV1Client) Vouchers(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Voucher, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["Vouchers"],
+		UrlArguments: []any{siteID},
+		Query:        buildQuery(filter, pageArgs),
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	var clientListPage *types.ClientListPage
+	var voucherListPage *types.VoucherListPage
 
-	err = json.Unmarshal(body, &clientListPage)
+	err = json.Unmarshal(body, &voucherListPage)
 	if err != nil {
 		return nil, err
 	}
 
-	// FIXME: Deal with pagination!
-
-	return clientListPage.Data, nil
+	return voucherListPage.Data, nil
 }
 
-func (c *Client) GetClientDetails(siteID string, clientID string) (*types.Client, error) {
-	body, err := c.doRequestArgs(API["network/clients/id"], http.StatusOK, []any{siteID, clientID})
+func (nc *networkV1Client) VoucherDetails(siteID types.SiteID, voucherID types.VoucherID) (*types.Voucher, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["VoucherDetails"],
+		UrlArguments: []any{siteID, voucherID},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	var client *types.Client
+	var voucher *types.Voucher
 
-	err = json.Unmarshal(body, &client)
+	err = json.Unmarshal(body, &voucher)
 	if err != nil {
 		return nil, err
 	}
 
-	return client, nil
+	return voucher, nil
+}
+
+func (nc *networkV1Client) VoucherGenerate(siteID types.SiteID, request *types.VoucherGenerateRequest) ([]*types.Voucher, error) {
+	jsonBody, err := json.Marshal(request)
+	nc.client.log.WithFields(logrus.Fields{
+		"method": "VoucherGenerate",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return nil, err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["VoucherGenerate"],
+		UrlArguments: []any{siteID},
+		RequestBody:  bodyReader,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var voucherGenerateResponse *types.VoucherGenerateResponse
+
+	err = json.Unmarshal(body, &voucherGenerateResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return voucherGenerateResponse.Vouchers, nil
+}
+
+func (nc *networkV1Client) VoucherDelete(siteID types.SiteID, voucherID types.VoucherID) (*types.VoucherDeleteResponse, error) {
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["VoucherDelete"],
+		UrlArguments: []any{siteID, voucherID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var voucherDeleteResponse *types.VoucherDeleteResponse
+	err = json.Unmarshal(body, &voucherDeleteResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return voucherDeleteResponse, nil
+}
+
+func (nc *networkV1Client) VoucherDeleteByFilter(siteID types.SiteID, filter types.Filter) (*types.VoucherDeleteResponse, error) {
+	query := &url.Values{}
+	filterStr := string(filter)
+	if len(filterStr) > 0 {
+		query.Add("filter", string(filter))
+	}
+
+	body, err := nc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["VoucherDeleteByFilter"],
+		UrlArguments: []any{siteID},
+		Query:        query,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var voucherDeleteResponse *types.VoucherDeleteResponse
+
+	err = json.Unmarshal(body, &voucherDeleteResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return voucherDeleteResponse, nil
 }
