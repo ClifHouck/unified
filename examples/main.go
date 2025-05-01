@@ -1,5 +1,6 @@
 package main
 
+import "sync"
 import "strings"
 import "time"
 import "os"
@@ -13,9 +14,13 @@ import "github.com/gopxl/beep/effects"
 import "github.com/gopxl/beep/mp3"
 import "github.com/gopxl/beep/speaker"
 
-import log "github.com/sirupsen/logrus"
+import "github.com/sirupsen/logrus"
+
+var log *logrus.Logger
 
 func main() {
+	log = logrus.New()
+
 	data, err := os.ReadFile("unifi_api.key")
 	if err != nil {
 		log.Error(err.Error())
@@ -34,24 +39,24 @@ func main() {
 		}
 		return
 	}
-	unifiClient := client.NewClient(config)
 
-	info, err := unifiClient.ProtectInfo()
+	ctx, cancel := context.WithCancel(context.Background())
+	unifiClient := client.NewClient(ctx, config, log)
+
+	info, err := unifiClient.Protect.Info()
 	if err != nil {
-		log.WithFields(log.Fields{
+		log.WithFields(logrus.Fields{
 			"error": err.Error(),
 		}).Error("ProtectInfo encountered error")
 		return
 	}
-	log.WithFields(log.Fields{
+	log.WithFields(logrus.Fields{
 		"version": info.ApplicationVersion,
 	}).Info("Unifi Protect Info")
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	eventChan, err := unifiClient.SubscribeProtectEvents(ctx)
 	if err != nil {
-		log.WithFields(log.Fields{
+		log.WithFields(logrus.Fields{
 			"error": err.Error(),
 		}).Error("SubscribeProtectEvent encountered error")
 		cancel()
@@ -61,7 +66,7 @@ func main() {
 
 	stream, format, err := LoadMP3("./Ding-dong-sound-effect.mp3")
 	if err != nil {
-		log.WithFields(log.Fields{
+		log.WithFields(logrus.Fields{
 			"error": err.Error(),
 		}).Error("LoadMP3 encountered error")
 		return
@@ -69,7 +74,10 @@ func main() {
 
 	streamHandler := client.NewProtectEventStreamHandler(ctx, eventChan)
 
+	var handlerMutex sync.Mutex
 	streamHandler.SetRingEventHandler(func(eventType string, event *types.RingEvent) {
+		handlerMutex.Lock()
+		defer handlerMutex.Unlock()
 		if eventType == "add" {
 			PlayDingDong(stream, format)
 		}

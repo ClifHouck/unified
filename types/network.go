@@ -4,6 +4,55 @@ import (
 	"time"
 )
 
+type NetworkV1 interface {
+	// About application
+	Info() (*NetworkInfo, error)
+
+	// Sites
+	Sites(Filter, *PageArguments) ([]*Site, error)
+
+	// Clients
+	Clients(SiteID, Filter, *PageArguments) ([]*Client, error)
+	ClientDetails(SiteID, ClientID) (*Client, error)
+	ClientExecuteAction(SiteID, ClientID, *ClientActionRequest) error
+
+	// Devices
+	Devices(SiteID, *PageArguments) ([]*DeviceListEntry, error)
+	DeviceDetails(SiteID, DeviceID) (*Device, error)
+	DeviceStatistics(SiteID, DeviceID) (*DeviceStatistics, error)
+	DeviceExecuteAction(SiteID, DeviceID, *DeviceActionRequest) error
+	DevicePortExecuteAction(SiteID, DeviceID, PortIdx, *DevicePortActionRequest) error
+
+	// Vouchers
+	Vouchers(SiteID, Filter, *PageArguments) ([]*Voucher, error)
+	VoucherDetails(SiteID, VoucherID) (*Voucher, error)
+	VoucherGenerate(SiteID, *VoucherGenerateRequest) ([]*Voucher, error)
+	VoucherDelete(SiteID, VoucherID) (*VoucherDeleteResponse, error)
+	VoucherDeleteByFilter(SiteID, Filter) (*VoucherDeleteResponse, error)
+}
+
+// TODO: All IDs appear to be UUIDs. Add some methods to verify IDs.
+type UnifiID string
+
+type SiteID UnifiID
+
+type DeviceID UnifiID
+
+type ClientID UnifiID
+
+type VoucherID UnifiID
+
+type PortIdx uint32
+
+// TODO: Filter has a bunch of syntax and rules associated with it
+// would like to parse and verify if possible.
+type Filter string
+
+type PageArguments struct {
+	Offset uint32
+	Limit  uint32
+}
+
 type NetworkInfo struct {
 	ApplicationVersion string `json:"applicationVersion"`
 }
@@ -118,6 +167,56 @@ type Client struct {
 	// Access      string    `json:"access"`
 }
 
+// TODO: Add action verification or enum
+type ClientActionRequest struct {
+	Action string `json:"action"`
+}
+
+// TODO: Add action verification or enum
 type DeviceActionRequest struct {
 	Action string `json:"action"`
+}
+
+// TODO: Add action verification or enum
+type DevicePortActionRequest struct {
+	Action string `json:"action"`
+}
+
+type VoucherListPage struct {
+	Data []*Voucher `json:"data"`
+	Page
+}
+
+type Voucher struct {
+	ID                   string    `json:"id"`
+	CreatedAt            time.Time `json:"createdAt"`
+	Name                 string    `json:"name"`
+	Code                 string    `json:"code"`
+	AuthorizedGuestLimit int       `json:"authorizedGuestLimit"`
+	AuthorizedGuestCount int       `json:"authorizedGuestCount"`
+	ActivatedAt          time.Time `json:"activatedAt"`
+	ExpiresAt            time.Time `json:"expiresAt"`
+	Expired              bool      `json:"expired"`
+	TimeLimitMinutes     int       `json:"timeLimitMinutes"`
+	DataUsageLimitMBytes int       `json:"dataUsageLimitMBytes"`
+	RxRateLimitKbps      int       `json:"rxRateLimitKbps"`
+	TxRateLimitKbps      int       `json:"txRateLimitKbps"`
+}
+
+type VoucherGenerateRequest struct {
+	Count                int    `json:"count"`
+	Name                 string `json:"name"`
+	AuthorizedGuestLimit int    `json:"authorizedGuestLimit"`
+	TimeLimitMinutes     int    `json:"timeLimitMinutes"`
+	DataUsageLimitMBytes int    `json:"dataUsageLimitMBytes"`
+	RxRateLimitKbps      int    `json:"rxRateLimitKbps"`
+	TxRateLimitKbps      int    `json:"txRateLimitKbps"`
+}
+
+type VoucherGenerateResponse struct {
+	Vouchers []*Voucher `json:"vouchers"`
+}
+
+type VoucherDeleteResponse struct {
+	VouchersDeleted int `json:"vouchersDeleted"`
 }

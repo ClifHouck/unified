@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -16,7 +17,7 @@ import (
 	"github.com/ClifHouck/unified/client"
 )
 
-var log = logrus.New()
+var log *logrus.Logger
 
 var rootCmd = &cobra.Command{
 	Use:   "unified",
@@ -30,6 +31,7 @@ var (
 	apiKey             string
 	keepAliveInterval  time.Duration
 	insecureSkipVerify bool
+	debugLogging       bool
 )
 
 func getClientConfig() *client.Config {
@@ -53,7 +55,7 @@ func getClientConfig() *client.Config {
 }
 
 func getClient() *client.Client {
-	return client.NewClient(getClientConfig())
+	return client.NewClient(context.Background(), getClientConfig(), log)
 }
 
 func Execute() {
@@ -71,7 +73,7 @@ func Execute() {
 }
 
 func init() {
-	configureLog()
+	log = logrus.New()
 
 	// Config file.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.unified.yaml)")
@@ -79,12 +81,17 @@ func init() {
 	// Universal command flags
 	rootCmd.PersistentFlags().StringVar(&hostname, "host", "unifi",
 		"Hostname of UniFi API")
+	// TODO: Maybe only expose this for websocket calls
 	rootCmd.PersistentFlags().DurationVar(&keepAliveInterval, "keep-alive-interval", time.Duration(time.Second*30),
 		"Interval between keep-alive pings sent for websocket streams")
 	rootCmd.PersistentFlags().BoolVar(&insecureSkipVerify, "insecure", true,
 		"Skip verification of UniFi TLS certificate.")
 
+	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Enable debug logging")
+
 	initConfig()
+
+	cobra.OnInitialize(configureLog)
 }
 
 func initConfig() {
@@ -104,7 +111,10 @@ func MarshalAndPrintJSON(v any) error {
 }
 
 func configureLog() {
-	// TODO: Allow configuration or flag to set logging to different level.
-	log.Level = logrus.InfoLevel
 	log.Out = os.Stderr
+
+	log.SetLevel(logrus.InfoLevel)
+	if debugLogging {
+		log.SetLevel(logrus.DebugLevel)
+	}
 }
