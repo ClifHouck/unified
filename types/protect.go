@@ -4,8 +4,18 @@ type ProtectV1 interface {
 	// About application
 	Info() (*ProtectInfo, error)
 
-	// FIXME: Fill-in rest.
+	// Websocket updates
+	SubscribeDeviceEvents() (<-chan *ProtectDeviceEvent, error)
+	SubscribeProtectEvents() (<-chan *ProtectEvent, error)
+
+	// Camera Information & Management
+	Cameras() ([]*Camera, error)
+	CameraDetails(CameraID) (*Camera, error)
+
+	// TODO: Rest of protect API!
 }
+
+type CameraID string
 
 type ProtectInfo struct {
 	ApplicationVersion string `json:"applicationVersion"`

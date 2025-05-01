@@ -54,7 +54,7 @@ func main() {
 		"version": info.ApplicationVersion,
 	}).Info("Unifi Protect Info")
 
-	eventChan, err := unifiClient.SubscribeProtectEvents()
+	eventChan, err := unifiClient.Protect.SubscribeProtectEvents()
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"error": err.Error(),

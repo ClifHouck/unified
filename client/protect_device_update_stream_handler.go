@@ -10,7 +10,7 @@ import "github.com/ClifHouck/unified/types"
 
 type ProtectDeviceEventStreamHandler struct {
 	ctx    context.Context
-	stream <-chan *ProtectDeviceEventMessage
+	stream <-chan *types.ProtectDeviceEvent
 
 	protectAddCameraEventHandler func(string, *types.ProtectAddCameraEvent)
 	protectAddCameraEventMutex   sync.Mutex
@@ -18,7 +18,7 @@ type ProtectDeviceEventStreamHandler struct {
 } // ProtectDeviceEventStreamHandler
 
 func NewProtectDeviceEventStreamHandler(ctx context.Context,
-	stream <-chan *ProtectDeviceEventMessage) *ProtectDeviceEventStreamHandler {
+	stream <-chan *types.ProtectDeviceEvent) *ProtectDeviceEventStreamHandler {
 	handler := &ProtectDeviceEventStreamHandler{
 		ctx:    ctx,
 		stream: stream,
@@ -35,14 +35,14 @@ func (esh *ProtectDeviceEventStreamHandler) processStream() {
 	log.Info("Waiting for events...")
 	for {
 		select {
-		case message := <-esh.stream:
-			if message == nil {
-				log.Warn("Got nil message. Bailing out!")
+		case streamEvent := <-esh.stream:
+			if streamEvent == nil {
+				log.Warn("Got nil event. Bailing out!")
 				return
 			}
 
 			var item types.ProtectDeviceEventItem
-			err := json.Unmarshal(message.Event.RawItem, &item)
+			err := json.Unmarshal(streamEvent.RawItem, &item)
 			if err != nil {
 				log.Error("Couldn't parse RawItem!")
 				log.Error(err.Error())
@@ -50,22 +50,17 @@ func (esh *ProtectDeviceEventStreamHandler) processStream() {
 
 			log.WithFields(log.Fields{
 				"ID":           item.ID,
-				"event.type":   message.Event.ItemType,
-				"message.type": message.Event.Type,
+				"event.type":   streamEvent.ItemType,
+				"message.type": streamEvent.Type,
 			}).Info("Received ProtectDeviceEvent")
 
-			switch event := message.Event.Item.(type) {
+			switch event := streamEvent.Item.(type) {
 
 			case *types.ProtectAddCameraEvent:
-				go esh.invokeProtectAddCameraEventHandler(message.Event.Type, event)
+				go esh.invokeProtectAddCameraEventHandler(streamEvent.Type, event)
 
 			default:
-				log.Errorf("Unknown type encountered: '%s'", message.Event.ItemType)
-			}
-
-			if message.Error != nil {
-				log.Error(message.Error.Error())
-				return
+				log.Errorf("Unknown type encountered: '%s'", streamEvent.ItemType)
 			}
 
 		case <-esh.ctx.Done():

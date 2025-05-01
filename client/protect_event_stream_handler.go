@@ -10,7 +10,7 @@ import "github.com/ClifHouck/unified/types"
 
 type ProtectEventStreamHandler struct {
 	ctx    context.Context
-	stream <-chan *ProtectEventMessage
+	stream <-chan *types.ProtectEvent
 
 	ringEventHandler func(string, *types.RingEvent)
 	ringEventMutex   sync.Mutex
@@ -57,7 +57,7 @@ type ProtectEventStreamHandler struct {
 } // ProtectEventStreamHandler
 
 func NewProtectEventStreamHandler(ctx context.Context,
-	stream <-chan *ProtectEventMessage) *ProtectEventStreamHandler {
+	stream <-chan *types.ProtectEvent) *ProtectEventStreamHandler {
 	handler := &ProtectEventStreamHandler{
 		ctx:    ctx,
 		stream: stream,
@@ -74,14 +74,14 @@ func (esh *ProtectEventStreamHandler) processStream() {
 	log.Info("Waiting for events...")
 	for {
 		select {
-		case message := <-esh.stream:
-			if message == nil {
-				log.Warn("Got nil message. Bailing out!")
+		case streamEvent := <-esh.stream:
+			if streamEvent == nil {
+				log.Warn("Got nil event. Bailing out!")
 				return
 			}
 
 			var item types.ProtectEventItem
-			err := json.Unmarshal(message.Event.RawItem, &item)
+			err := json.Unmarshal(streamEvent.RawItem, &item)
 			if err != nil {
 				log.Error("Couldn't parse RawItem!")
 				log.Error(err.Error())
@@ -89,61 +89,56 @@ func (esh *ProtectEventStreamHandler) processStream() {
 
 			log.WithFields(log.Fields{
 				"ID":           item.ID,
-				"event.type":   message.Event.ItemType,
-				"message.type": message.Event.Type,
+				"event.type":   streamEvent.ItemType,
+				"message.type": streamEvent.Type,
 			}).Info("Received ProtectEvent")
 
-			switch event := message.Event.Item.(type) {
+			switch event := streamEvent.Item.(type) {
 
 			case *types.RingEvent:
-				go esh.invokeRingEventHandler(message.Event.Type, event)
+				go esh.invokeRingEventHandler(streamEvent.Type, event)
 
 			case *types.SensorExtremeValuesEvent:
-				go esh.invokeSensorExtremeValuesEventHandler(message.Event.Type, event)
+				go esh.invokeSensorExtremeValuesEventHandler(streamEvent.Type, event)
 
 			case *types.SensorWaterLeakEvent:
-				go esh.invokeSensorWaterLeakEventHandler(message.Event.Type, event)
+				go esh.invokeSensorWaterLeakEventHandler(streamEvent.Type, event)
 
 			case *types.SensorTamperEvent:
-				go esh.invokeSensorTamperEventHandler(message.Event.Type, event)
+				go esh.invokeSensorTamperEventHandler(streamEvent.Type, event)
 
 			case *types.SensorBatteryLowEvent:
-				go esh.invokeSensorBatteryLowEventHandler(message.Event.Type, event)
+				go esh.invokeSensorBatteryLowEventHandler(streamEvent.Type, event)
 
 			case *types.SensorAlarmEvent:
-				go esh.invokeSensorAlarmEventHandler(message.Event.Type, event)
+				go esh.invokeSensorAlarmEventHandler(streamEvent.Type, event)
 
 			case *types.SensorOpenedEvent:
-				go esh.invokeSensorOpenedEventHandler(message.Event.Type, event)
+				go esh.invokeSensorOpenedEventHandler(streamEvent.Type, event)
 
 			case *types.SensorClosedEvent:
-				go esh.invokeSensorClosedEventHandler(message.Event.Type, event)
+				go esh.invokeSensorClosedEventHandler(streamEvent.Type, event)
 
 			case *types.LightMotionEvent:
-				go esh.invokeLightMotionEventHandler(message.Event.Type, event)
+				go esh.invokeLightMotionEventHandler(streamEvent.Type, event)
 
 			case *types.CameraMotionEvent:
-				go esh.invokeCameraMotionEventHandler(message.Event.Type, event)
+				go esh.invokeCameraMotionEventHandler(streamEvent.Type, event)
 
 			case *types.CameraSmartDetectAudioEvent:
-				go esh.invokeCameraSmartDetectAudioEventHandler(message.Event.Type, event)
+				go esh.invokeCameraSmartDetectAudioEventHandler(streamEvent.Type, event)
 
 			case *types.CameraSmartDetectZoneEvent:
-				go esh.invokeCameraSmartDetectZoneEventHandler(message.Event.Type, event)
+				go esh.invokeCameraSmartDetectZoneEventHandler(streamEvent.Type, event)
 
 			case *types.CameraSmartDetectLineEvent:
-				go esh.invokeCameraSmartDetectLineEventHandler(message.Event.Type, event)
+				go esh.invokeCameraSmartDetectLineEventHandler(streamEvent.Type, event)
 
 			case *types.CameraSmartDetectLoiterEvent:
-				go esh.invokeCameraSmartDetectLoiterEventHandler(message.Event.Type, event)
+				go esh.invokeCameraSmartDetectLoiterEventHandler(streamEvent.Type, event)
 
 			default:
-				log.Errorf("Unknown type encountered: '%s'", message.Event.ItemType)
-			}
-
-			if message.Error != nil {
-				log.Error(message.Error.Error())
-				return
+				log.Errorf("Unknown type encountered: '%s'", streamEvent.ItemType)
 			}
 
 		case <-esh.ctx.Done():
