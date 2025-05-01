@@ -36,7 +36,7 @@ import "github.com/ClifHouck/unified/types"
 const STREAM_HANDLER_STRUCT_BEGIN = `
 type {{.StreamType}}StreamHandler struct {
 	ctx    context.Context
-	stream <-chan *{{.StreamType}}Message
+	stream <-chan *types.{{.StreamType}}
 `
 
 const STREAM_HANDLER_STRUCT_EVENT_TYPE_MEMBERS = `
@@ -50,7 +50,7 @@ const STREAM_HANDLER_STRUCT_END = `
 
 const NEW_STREAM_HANDLER_OBJECT_FUNCTION = `
 func New{{.StreamType}}StreamHandler(ctx context.Context,
-	stream <-chan *{{.StreamType}}Message) *{{.StreamType}}StreamHandler {
+	stream <-chan *types.{{.StreamType}}) *{{.StreamType}}StreamHandler {
 	handler := &{{.StreamType}}StreamHandler{
 		ctx:    ctx,
 		stream: stream,
@@ -69,14 +69,14 @@ func (esh *{{.StreamType}}StreamHandler) processStream() {
 	log.Info("Waiting for events...")
 	for {
 		select {
-		case message := <-esh.stream:
-			if message == nil {
-				log.Warn("Got nil message. Bailing out!")
+		case streamEvent := <-esh.stream:
+			if streamEvent == nil {
+				log.Warn("Got nil event. Bailing out!")
 				return
 			}
 
 			var item types.{{.StreamType}}Item
-			err := json.Unmarshal(message.Event.RawItem, &item)
+			err := json.Unmarshal(streamEvent.RawItem, &item)
 			if err != nil {
 				log.Error("Couldn't parse RawItem!")
 				log.Error(err.Error())
@@ -84,26 +84,21 @@ func (esh *{{.StreamType}}StreamHandler) processStream() {
 
 			log.WithFields(log.Fields{
 				"ID":           item.ID,
-				"event.type":   message.Event.ItemType,
-				"message.type": message.Event.Type,
+				"event.type":   streamEvent.ItemType,
+				"message.type": streamEvent.Type,
 			}).Info("Received {{.StreamType}}")
 
-			switch event := message.Event.Item.(type) {
+			switch event := streamEvent.Item.(type) {
 `
 
 const PROCESS_STREAM_CASE = `
 			case *types.{{.EventType}}:
-				go esh.invoke{{.EventType}}Handler(message.Event.Type, event)
+				go esh.invoke{{.EventType}}Handler(streamEvent.Type, event)
 `
 
 const PROCESS_STREAM_METHOD_END = `
 			default:
-				log.Errorf("Unknown type encountered: '%s'", message.Event.ItemType)
-			}
-
-			if message.Error != nil {
-				log.Error(message.Error.Error())
-				return
+				log.Errorf("Unknown type encountered: '%s'", streamEvent.ItemType)
 			}
 
 		case <-esh.ctx.Done():
