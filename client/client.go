@@ -1,5 +1,6 @@
 package client
 
+import "strconv"
 import "bytes"
 import "context"
 import "crypto/tls"
@@ -142,7 +143,7 @@ var networkAPI = map[string]*ApiEndpoint{
 		Application: "network",
 		NumUrlArgs:  2,
 	},
-	"VoucherDeleteByFilters": &ApiEndpoint{
+	"VoucherDeleteByFilter": &ApiEndpoint{
 		UrlFragment:  "sites/%s/hotspot/vouchers",
 		Method:       http.MethodDelete,
 		Description:  "Delete vouchers by filter",
@@ -282,6 +283,13 @@ func (c *Client) webSocketHeaders() *http.Header {
 	return headers
 }
 
+type requestArgs struct {
+	Endpoint     *ApiEndpoint
+	UrlArguments []any
+	RequestBody  io.Reader
+	Query        *url.Values
+}
+
 func (c *Client) renderUrl(req *requestArgs) string {
 	renderedFragment := req.Endpoint.UrlFragment
 
@@ -294,8 +302,6 @@ func (c *Client) renderUrl(req *requestArgs) string {
 			"required by the API endpoint")
 	}
 
-	// TODO: Some sort of sanity checking on number of query args...
-
 	if len(req.UrlArguments) > 0 {
 		renderedFragment = fmt.Sprintf(req.Endpoint.UrlFragment, req.UrlArguments...)
 	}
@@ -307,6 +313,7 @@ func (c *Client) renderUrl(req *requestArgs) string {
 
 	url := fmt.Sprintf(URL_TEMPLATE, protocol, c.config.Hostname, req.Endpoint.Application, renderedFragment)
 
+	// TODO: Some sort of sanity checking on number & keys of query args...
 	if req.Query != nil {
 		encodedQuery := req.Query.Encode()
 		if len(encodedQuery) > 0 {
@@ -318,13 +325,6 @@ func (c *Client) renderUrl(req *requestArgs) string {
 		"url": url,
 	}).Trace("Rendered url")
 	return url
-}
-
-type requestArgs struct {
-	Endpoint     *ApiEndpoint
-	UrlArguments []any
-	RequestBody  io.Reader
-	Query        *url.Values
 }
 
 func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
@@ -369,6 +369,16 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 	}
 
 	if resp.StatusCode != expectedStatus {
+		var unifiError types.Error
+		err = json.Unmarshal(body, &unifiError)
+		if err == nil && unifiError.StatusCode != 0 {
+			c.log.WithFields(logrus.Fields{
+				"code":    unifiError.StatusCode,
+				"name":    unifiError.StatusName,
+				"message": unifiError.Message,
+			}).Errorf("UniFi application returned an error")
+		}
+
 		return nil, fmt.Errorf("got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedUrl)
 	}
 
@@ -580,6 +590,24 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 	return eventChan, nil
 }
 
+func buildQuery(filter types.Filter, pageArgs *types.PageArguments) *url.Values {
+	query := &url.Values{}
+	filterStr := string(filter)
+	if len(filterStr) > 0 {
+		query.Add("filter", string(filter))
+	}
+	if pageArgs != nil {
+		if pageArgs.Limit != 0 {
+			query.Add("limit", strconv.FormatUint(uint64(pageArgs.Limit), 10))
+
+		}
+		if pageArgs.Offset != 0 {
+			query.Add("offset", strconv.FormatUint(uint64(pageArgs.Offset), 10))
+		}
+	}
+	return query
+}
+
 func (nc *networkV1Client) Info() (*types.NetworkInfo, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint: networkAPI["Info"],
@@ -600,6 +628,7 @@ func (nc *networkV1Client) Info() (*types.NetworkInfo, error) {
 func (nc *networkV1Client) Sites(filter types.Filter, pageArgs *types.PageArguments) ([]*types.Site, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint: networkAPI["Sites"],
+		Query:    buildQuery(filter, pageArgs),
 	})
 	if err != nil {
 		return nil, err
@@ -612,16 +641,14 @@ func (nc *networkV1Client) Sites(filter types.Filter, pageArgs *types.PageArgume
 		return nil, err
 	}
 
-	// FIXME: Deal with pagination!
-
 	return siteListPage.Data, nil
 }
 
 func (nc *networkV1Client) Clients(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Client, error) {
-	// FIXME: Deal with pagination and filter!
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["Clients"],
 		UrlArguments: []any{siteID},
+		Query:        buildQuery(filter, pageArgs),
 	})
 	if err != nil {
 		return nil, err
@@ -633,8 +660,6 @@ func (nc *networkV1Client) Clients(siteID types.SiteID, filter types.Filter, pag
 	if err != nil {
 		return nil, err
 	}
-
-	// FIXME: Deal with pagination!
 
 	return clientListPage.Data, nil
 }
@@ -679,10 +704,10 @@ func (nc *networkV1Client) ClientExecuteAction(siteID types.SiteID, clientID typ
 }
 
 func (nc *networkV1Client) Devices(siteID types.SiteID, pageArgs *types.PageArguments) ([]*types.DeviceListEntry, error) {
-	// FIXME: We have to send url query args
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["Devices"],
 		UrlArguments: []any{siteID},
+		Query:        buildQuery(types.Filter(""), pageArgs),
 	})
 	if err != nil {
 		return nil, err
@@ -695,10 +720,7 @@ func (nc *networkV1Client) Devices(siteID types.SiteID, pageArgs *types.PageArgu
 		return nil, err
 	}
 
-	// FIXME: Deal with pagination!
-
 	return deviceListPage.Data, nil
-
 }
 
 func (nc *networkV1Client) DeviceDetails(siteID types.SiteID, deviceID types.DeviceID) (*types.Device, error) {
@@ -780,10 +802,10 @@ func (nc *networkV1Client) DevicePortExecuteAction(siteID types.SiteID, deviceID
 }
 
 func (nc *networkV1Client) Vouchers(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Voucher, error) {
-	// FIXME: We have to send url query args: ie filter and page args
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["Vouchers"],
 		UrlArguments: []any{siteID},
+		Query:        buildQuery(filter, pageArgs),
 	})
 	if err != nil {
 		return nil, err
@@ -795,8 +817,6 @@ func (nc *networkV1Client) Vouchers(siteID types.SiteID, filter types.Filter, pa
 	if err != nil {
 		return nil, err
 	}
-
-	// FIXME: Deal with pagination!
 
 	return voucherListPage.Data, nil
 }
@@ -869,10 +889,16 @@ func (nc *networkV1Client) VoucherDelete(siteID types.SiteID, voucherID types.Vo
 }
 
 func (nc *networkV1Client) VoucherDeleteByFilter(siteID types.SiteID, filter types.Filter) (*types.VoucherDeleteResponse, error) {
-	// FIXME: Send filter!!
+	query := &url.Values{}
+	filterStr := string(filter)
+	if len(filterStr) > 0 {
+		query.Add("filter", string(filter))
+	}
+
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["VoucherDeleteByFilter"],
 		UrlArguments: []any{siteID},
+		Query:        query,
 	})
 	if err != nil {
 		return nil, err

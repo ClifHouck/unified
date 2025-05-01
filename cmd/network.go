@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -15,12 +16,18 @@ var listingFlagSet = pflag.NewFlagSet("listing", pflag.ExitOnError)
 var filter = ""
 var filterFlagSet = pflag.NewFlagSet("filter", pflag.ExitOnError)
 
-// FIXME: Pagination flag set/args
-// FIXME: Filter flag set/args
+var pageArgs = &types.PageArguments{}
+var pageFlagSet = pflag.NewFlagSet("page", pflag.ExitOnError)
+
+var voucherGenerateReq = &types.VoucherGenerateRequest{}
 
 func init() {
 	filterFlagSet.StringVar(&filter, "filter", "", "Filter results based on expression")
+
 	listingFlagSet.BoolVar(&idOnly, "id-only", false, "List only the ID of listed entities, one per line.")
+
+	pageFlagSet.Uint32Var(&pageArgs.Offset, "page-offset", 0, "Offset of page to request")
+	pageFlagSet.Uint32Var(&pageArgs.Limit, "page-limit", 0, "Limit of items per page")
 
 	networkCmd.AddCommand(networkInfoCmd)
 	networkCmd.AddCommand(devicesCmd)
@@ -28,29 +35,49 @@ func init() {
 	networkCmd.AddCommand(clientsCmd)
 	networkCmd.AddCommand(vouchersCmd)
 
+	// Sites
+	listSitesCmd.Flags().AddFlagSet(listingFlagSet)
+	listSitesCmd.Flags().AddFlagSet(filterFlagSet)
+	listSitesCmd.Flags().AddFlagSet(pageFlagSet)
+	sitesCmd.AddCommand(listSitesCmd)
+
+	// Clients
+	listClientsCmd.Flags().AddFlagSet(listingFlagSet)
+	listClientsCmd.Flags().AddFlagSet(filterFlagSet)
+	listClientsCmd.Flags().AddFlagSet(pageFlagSet)
+	clientsCmd.AddCommand(listClientsCmd)
+	clientsCmd.AddCommand(clientDetailsCmd)
+	clientsCmd.AddCommand(actionClientCmd)
+
+	// Devices
 	listDevicesCmd.Flags().AddFlagSet(listingFlagSet)
+	listDevicesCmd.Flags().AddFlagSet(pageFlagSet)
 	devicesCmd.AddCommand(listDevicesCmd)
 	devicesCmd.AddCommand(deviceDetailsCmd)
 	devicesCmd.AddCommand(statsDevicesCmd)
 	devicesCmd.AddCommand(actionDevicesCmd)
-	//devicesCmd.AddCommand(actionDevicePortCmd)
+	devicesCmd.AddCommand(actionDevicePortCmd)
 
-	listSitesCmd.Flags().AddFlagSet(listingFlagSet)
-	sitesCmd.AddCommand(listSitesCmd)
-
-	listClientsCmd.Flags().AddFlagSet(listingFlagSet)
-	listClientsCmd.Flags().AddFlagSet(filterFlagSet)
-	clientsCmd.AddCommand(listClientsCmd)
-	clientsCmd.AddCommand(clientDetailsCmd)
-
+	// Vouchers
 	listVouchersCmd.Flags().AddFlagSet(listingFlagSet)
 	listVouchersCmd.Flags().AddFlagSet(filterFlagSet)
+	listVouchersCmd.Flags().AddFlagSet(pageFlagSet)
 	vouchersCmd.AddCommand(listVouchersCmd)
 	vouchersCmd.AddCommand(voucherDetailsCmd)
-	//vouchersCmd.AddCommand(voucherGenerateCmd)
-	//vouchersCmd.AddCommand(voucherDeleteCmd)
-	// voucherDeleteByFilterCmd.Flags().AddFlagSet(filterFlagSet)
-	//vouchersCmd.AddCommand(voucherDeleteByFilterCmd)
+
+	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.Count, "count", 0, "Number of vouchers")
+	voucherGenerateCmd.Flags().StringVar(&voucherGenerateReq.Name, "name", "", "Name of vouchers")
+	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.AuthorizedGuestLimit, "guest-limit", 0, "Authorized guest limit")
+	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.TimeLimitMinutes, "time-limit", 0, "Time limit in minutes")
+	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.DataUsageLimitMBytes, "data-limit", 0, "Data limit in megabytes")
+	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.RxRateLimitKbps, "rx-limit", 0, "Recieve rate limit in kilobytes")
+	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.TxRateLimitKbps, "tx-limit", 0, "Transmit rate limit in kilobytes")
+	vouchersCmd.AddCommand(voucherGenerateCmd)
+
+	vouchersCmd.AddCommand(voucherDeleteCmd)
+
+	voucherDeleteByFilterCmd.Flags().AddFlagSet(filterFlagSet)
+	vouchersCmd.AddCommand(voucherDeleteByFilterCmd)
 }
 
 var networkCmd = &cobra.Command{
@@ -110,20 +137,22 @@ and prints the results to stdout.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		devices, err := c.Network.Devices(types.SiteID(args[0]), &types.PageArguments{})
+		devices, err := c.Network.Devices(types.SiteID(args[0]), pageArgs)
 		if err != nil {
 			log.Error(err.Error())
 			return
 		}
-		for _, device := range devices {
-			if idOnly {
-				fmt.Println(device.ID)
-			} else {
-				err := MarshalAndPrintJSON(device)
-				if err != nil {
-					log.Error(err.Error())
-					return
+		if idOnly {
+			for _, device := range devices {
+				if idOnly {
+					fmt.Println(device.ID)
 				}
+			}
+		} else {
+			err := MarshalAndPrintJSON(devices)
+			if err != nil {
+				log.Error(err.Error())
+				return
 			}
 		}
 	},
@@ -194,6 +223,35 @@ var actionDevicesCmd = &cobra.Command{
 	},
 }
 
+var actionDevicePortCmd = &cobra.Command{
+	Use:   "action [site ID] [device ID] [portIdx] [action]",
+	Short: "Execute an action on a specific adopted device",
+	Args:  cobra.ExactArgs(4),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+
+		action := &types.DevicePortActionRequest{
+			Action: args[3],
+		}
+
+		port, err := strconv.Atoi(args[2])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		err = c.Network.DevicePortExecuteAction(types.SiteID(args[0]),
+			types.DeviceID(args[1]),
+			types.PortIdx(port),
+			action)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		log.Info("Request success: 200 OK")
+	},
+}
+
 var listSitesCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all sites managed by the Network application",
@@ -202,21 +260,21 @@ Setups using Multi-Site option enabled will return all created sites,
 while if option is disabled it will return just the default site.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		// FIXME: Deal with filter and page options!!
-		sites, err := c.Network.Sites(types.Filter(filter), &types.PageArguments{})
+		sites, err := c.Network.Sites(types.Filter(filter), pageArgs)
 		if err != nil {
 			log.Error(err.Error())
 			return
 		}
-		for _, site := range sites {
-			if idOnly {
+
+		if idOnly {
+			for _, site := range sites {
 				fmt.Println(site.ID)
-			} else {
-				err := MarshalAndPrintJSON(site)
-				if err != nil {
-					log.Error(err.Error())
-					return
-				}
+			}
+		} else {
+			err := MarshalAndPrintJSON(sites)
+			if err != nil {
+				log.Error(err.Error())
+				return
 			}
 		}
 	},
@@ -231,24 +289,23 @@ or active VPN connections.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		// FIXME: Deal with page options!!
 		clients, err := c.Network.Clients(
 			types.SiteID(args[0]),
 			types.Filter(filter),
-			&types.PageArguments{})
+			pageArgs)
 		if err != nil {
 			log.Error(err.Error())
 			return
 		}
-		for _, client := range clients {
-			if idOnly {
+		if idOnly {
+			for _, client := range clients {
 				fmt.Println(client.ID)
-			} else {
-				err := MarshalAndPrintJSON(client)
-				if err != nil {
-					log.Error(err.Error())
-					return
-				}
+			}
+		} else {
+			err := MarshalAndPrintJSON(clients)
+			if err != nil {
+				log.Error(err.Error())
+				return
 			}
 		}
 	},
@@ -273,7 +330,7 @@ var clientDetailsCmd = &cobra.Command{
 	},
 }
 
-var clientActionCommand = &cobra.Command{
+var actionClientCmd = &cobra.Command{
 	Use:   "action [site ID] [client ID] [action]",
 	Short: "Execute an action on a specific client",
 	Args:  cobra.ExactArgs(3),
@@ -300,22 +357,21 @@ var listVouchersCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		// FIXME: Deal with page options!!
 		vouchers, err := c.Network.Vouchers(types.SiteID(args[0]),
-			types.Filter(filter), &types.PageArguments{})
+			types.Filter(filter), pageArgs)
 		if err != nil {
 			log.Error(err.Error())
 			return
 		}
-		for _, voucher := range vouchers {
-			if idOnly {
+		if idOnly {
+			for _, voucher := range vouchers {
 				fmt.Println(voucher.ID)
-			} else {
-				err := MarshalAndPrintJSON(voucher)
-				if err != nil {
-					log.Error(err.Error())
-					return
-				}
+			}
+		} else {
+			err := MarshalAndPrintJSON(vouchers)
+			if err != nil {
+				log.Error(err.Error())
+				return
 			}
 		}
 	},
@@ -333,6 +389,70 @@ var voucherDetailsCmd = &cobra.Command{
 			return
 		}
 		err = MarshalAndPrintJSON(voucher)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var voucherGenerateCmd = &cobra.Command{
+	Use:   "generate [site ID]",
+	Short: "Generate one or more hotspot vouchers for a site",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		vouchers, err := c.Network.VoucherGenerate(types.SiteID(args[0]), voucherGenerateReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = MarshalAndPrintJSON(vouchers)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var voucherDeleteCmd = &cobra.Command{
+	Use:   "delete [site ID] [voucher ID]",
+	Short: "Delete a specific voucher",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		voucherDeleteResp, err := c.Network.VoucherDelete(types.SiteID(args[0]), types.VoucherID(args[1]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = MarshalAndPrintJSON(voucherDeleteResp)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var voucherDeleteByFilterCmd = &cobra.Command{
+	Use:   "delete-filter [site ID]",
+	Short: "Delete many vouchers by way of filter - BE CAREFUL!",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+
+		// TODO: Should there be a "--allow-empty-filter" flag or similar?
+		if len(filter) == 0 {
+			log.Error("Filter may not be empty for delete request")
+			return
+		}
+
+		voucherDeleteResp, err := c.Network.VoucherDeleteByFilter(types.SiteID(args[0]), types.Filter(filter))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = MarshalAndPrintJSON(voucherDeleteResp)
 		if err != nil {
 			log.Error(err.Error())
 			return
