@@ -336,7 +336,7 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 		}).Fatal("Request should have a body but http.NoBody was passed")
 	}
 
-	request, err := http.NewRequest(req.Endpoint.Method, renderedUrl, req.RequestBody)
+	request, err := http.NewRequestWithContext(c.ctx, req.Endpoint.Method, renderedUrl, req.RequestBody)
 	if err != nil {
 		return nil, err
 	}
@@ -376,7 +376,7 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 				"code":    unifiError.StatusCode,
 				"name":    unifiError.StatusName,
 				"message": unifiError.Message,
-			}).Errorf("UniFi application returned an error")
+			}).Error("UniFi application returned an error")
 		}
 
 		return nil, fmt.Errorf("got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedUrl)
@@ -453,10 +453,10 @@ type ProtectEventMessage struct {
 // Periodically pings the websocket connection to keep it alive.
 // coder/websocket is concurrency-safe for writes so this may be used with
 // any websocket connection.
-func (c *Client) webSocketKeepAlive(ctx context.Context, conn *websocket.Conn, url string) {
+func (c *Client) webSocketKeepAlive(conn *websocket.Conn, url string) {
 	tickChan := time.Tick(c.config.WebSocketKeepAliveInterval)
 	for next := range tickChan {
-		err := conn.Ping(ctx)
+		err := conn.Ping(c.ctx)
 		if err != nil {
 			c.log.WithFields(logrus.Fields{
 				"url":   url,
@@ -467,15 +467,15 @@ func (c *Client) webSocketKeepAlive(ctx context.Context, conn *websocket.Conn, u
 		c.log.WithFields(logrus.Fields{
 			"url":          url,
 			"next_ping_at": next,
-		}).Debug("WebSocket.Ping (Keep-Alive) Success")
+		}).Trace("WebSocket.Ping (Keep-Alive) Success")
 	}
 }
 
-func (c *Client) SubscribeProtectEvents(ctx context.Context) (<-chan *ProtectEventMessage, error) {
+func (c *Client) SubscribeProtectEvents() (<-chan *ProtectEventMessage, error) {
 	url := c.renderUrl(&requestArgs{
 		Endpoint: protectAPI["protect/subscribe/events"],
 	})
-	conn, _, err := websocket.Dial(ctx,
+	conn, _, err := websocket.Dial(c.ctx,
 		url,
 		&websocket.DialOptions{
 			HTTPClient: c.client,
@@ -488,13 +488,23 @@ func (c *Client) SubscribeProtectEvents(ctx context.Context) (<-chan *ProtectEve
 		"url": url,
 	}).Info("WebSocket.Dial() success")
 
-	go c.webSocketKeepAlive(ctx, conn, url)
+	go c.webSocketKeepAlive(conn, url)
 
 	eventChan := make(chan *ProtectEventMessage)
 
 	go func() {
 		for {
-			messageType, data, err := conn.Read(ctx)
+			// Make sure context is good.
+			select {
+			case <-c.ctx.Done():
+				c.log.WithFields(logrus.Fields{
+					"url": url,
+				}).Trace("Context done.")
+				return
+			default:
+			}
+
+			messageType, data, err := conn.Read(c.ctx)
 			if err != nil {
 				c.log.WithFields(logrus.Fields{
 					"url":   url,
@@ -533,11 +543,11 @@ type ProtectDeviceEventMessage struct {
 	Event types.ProtectDeviceEvent
 }
 
-func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *ProtectDeviceEventMessage, error) {
+func (c *Client) SubscribeProtectDeviceUpdates() (<-chan *ProtectDeviceEventMessage, error) {
 	url := c.renderUrl(&requestArgs{
 		Endpoint: protectAPI["protect/subscribe/devices"],
 	})
-	conn, _, err := websocket.Dial(ctx,
+	conn, _, err := websocket.Dial(c.ctx,
 		url,
 		&websocket.DialOptions{
 			HTTPClient: c.client,
@@ -550,13 +560,23 @@ func (c *Client) SubscribeProtectDeviceUpdates(ctx context.Context) (<-chan *Pro
 		"url": url,
 	}).Info("WebSocket Dial Success")
 
-	go c.webSocketKeepAlive(ctx, conn, url)
+	go c.webSocketKeepAlive(conn, url)
 
 	eventChan := make(chan *ProtectDeviceEventMessage)
 
 	go func() {
 		for {
-			messageType, data, err := conn.Read(ctx)
+			// Make sure context is good.
+			select {
+			case <-c.ctx.Done():
+				c.log.WithFields(logrus.Fields{
+					"url": url,
+				}).Trace("Context done.")
+				return
+			default:
+			}
+
+			messageType, data, err := conn.Read(c.ctx)
 			if err != nil {
 				c.log.WithFields(logrus.Fields{
 					"url":   url,
