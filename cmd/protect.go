@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/ClifHouck/unified/types"
@@ -14,8 +16,8 @@ func init() {
 	protectCmd.AddCommand(subscribeCmd)
 
 	// Subscriptions
-	// subscribeCmd.AddCommand(deviceEventsCmd)
-	// subscribeCmd.AddComannd(protectEventsCmd)
+	subscribeCmd.AddCommand(deviceEventsCmd)
+	subscribeCmd.AddCommand(protectEventsCmd)
 
 	// Cameras
 	cameraListCmd.Flags().AddFlagSet(listingFlagSet)
@@ -56,6 +58,100 @@ var protectInfoCmd = &cobra.Command{
 		if err != nil {
 			log.Error(err.Error())
 			return
+		}
+	},
+}
+
+var deviceEventsCmd = &cobra.Command{
+	Use:   "device-events",
+	Short: "Stream device events from Protect API",
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		events, err := c.Protect.SubscribeDeviceEvents()
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		log.Info("Streaming device events...")
+		for {
+			select {
+			case streamEvent := <-events:
+				if streamEvent == nil {
+					log.Warn("Got nil event. Bailing out!")
+					return
+				}
+
+				var item types.ProtectDeviceEventItem
+				err := json.Unmarshal(streamEvent.RawItem, &item)
+				if err != nil {
+					log.Error("Couldn't parse RawItem!")
+					log.Error(err.Error())
+				}
+
+				log.WithFields(logrus.Fields{
+					"ID":           item.ID,
+					"event.type":   streamEvent.ItemType,
+					"message.type": streamEvent.Type,
+				}).Info("Received ProtectDeviceEvent")
+
+				err = MarshalAndPrintJSON(item)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+
+			case <-ctx.Done():
+				log.Warn("Got context.Done!")
+				return
+			}
+		}
+	},
+}
+
+var protectEventsCmd = &cobra.Command{
+	Use:   "protect-events",
+	Short: "Stream protect events from Protect API",
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		events, err := c.Protect.SubscribeProtectEvents()
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		log.Info("Streaming protect events...")
+		for {
+			select {
+			case streamEvent := <-events:
+				if streamEvent == nil {
+					log.Warn("Got nil event. Bailing out!")
+					return
+				}
+
+				var item types.ProtectEventItem
+				err := json.Unmarshal(streamEvent.RawItem, &item)
+				if err != nil {
+					log.Error("Couldn't parse RawItem!")
+					log.Error(err.Error())
+				}
+
+				log.WithFields(logrus.Fields{
+					"ID":           item.ID,
+					"event.type":   streamEvent.ItemType,
+					"message.type": streamEvent.Type,
+				}).Info("Received ProtectEvent")
+
+				err = MarshalAndPrintJSON(item)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+
+			case <-ctx.Done():
+				log.Warn("Got context.Done!")
+				return
+			}
 		}
 	},
 }

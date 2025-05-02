@@ -26,6 +26,7 @@ var rootCmd = &cobra.Command{
 }
 
 var (
+	ctx                context.Context
 	cfgFile            string
 	hostname           string
 	apiKey             string
@@ -55,7 +56,7 @@ func getClientConfig() *client.Config {
 }
 
 func getClient() *client.Client {
-	return client.NewClient(context.Background(), getClientConfig(), log)
+	return client.NewClient(ctx, getClientConfig(), log)
 }
 
 func Execute() {
@@ -74,6 +75,7 @@ func Execute() {
 }
 
 func init() {
+	ctx = context.Background()
 	log = logrus.New()
 
 	// Config file.
