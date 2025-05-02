@@ -60,6 +60,7 @@ func getClient() *client.Client {
 
 func Execute() {
 	rootCmd.AddCommand(networkCmd)
+	rootCmd.AddCommand(protectCmd)
 
 	if apiKey == "" {
 		apiKey = viper.GetString("unifi_api_key")
