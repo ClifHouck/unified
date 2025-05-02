@@ -10,9 +10,6 @@ import (
 	"github.com/ClifHouck/unified/types"
 )
 
-var idOnly = false
-var listingFlagSet = pflag.NewFlagSet("listing", pflag.ExitOnError)
-
 var filter = ""
 var filterFlagSet = pflag.NewFlagSet("filter", pflag.ExitOnError)
 
