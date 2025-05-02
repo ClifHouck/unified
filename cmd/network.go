@@ -13,6 +13,7 @@ import (
 var filter = ""
 var filterFlagSet = pflag.NewFlagSet("filter", pflag.ExitOnError)
 
+var hidePage = false
 var pageArgs = &types.PageArguments{}
 var pageFlagSet = pflag.NewFlagSet("page", pflag.ExitOnError)
 
@@ -23,6 +24,7 @@ func init() {
 
 	listingFlagSet.BoolVar(&idOnly, "id-only", false, "List only the ID of listed entities, one per line.")
 
+	pageFlagSet.BoolVar(&hidePage, "hide-page", false, "Hides the returned current page information")
 	pageFlagSet.Uint32Var(&pageArgs.Offset, "page-offset", 0, "Offset of page to request")
 	pageFlagSet.Uint32Var(&pageArgs.Limit, "page-limit", 0, "Limit of items per page")
 
@@ -134,7 +136,7 @@ and prints the results to stdout.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		devices, err := c.Network.Devices(types.SiteID(args[0]), pageArgs)
+		devices, page, err := c.Network.Devices(types.SiteID(args[0]), pageArgs)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -146,6 +148,14 @@ and prints the results to stdout.`,
 				}
 			}
 		} else {
+			if !hidePage {
+				err := MarshalAndPrintJSON(page)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+			}
+
 			err := MarshalAndPrintJSON(devices)
 			if err != nil {
 				log.Error(err.Error())
@@ -257,7 +267,7 @@ Setups using Multi-Site option enabled will return all created sites,
 while if option is disabled it will return just the default site.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		sites, err := c.Network.Sites(types.Filter(filter), pageArgs)
+		sites, page, err := c.Network.Sites(types.Filter(filter), pageArgs)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -268,6 +278,14 @@ while if option is disabled it will return just the default site.`,
 				fmt.Println(site.ID)
 			}
 		} else {
+			if !hidePage {
+				err := MarshalAndPrintJSON(page)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+			}
+
 			err := MarshalAndPrintJSON(sites)
 			if err != nil {
 				log.Error(err.Error())
@@ -286,7 +304,7 @@ or active VPN connections.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		clients, err := c.Network.Clients(
+		clients, page, err := c.Network.Clients(
 			types.SiteID(args[0]),
 			types.Filter(filter),
 			pageArgs)
@@ -299,6 +317,14 @@ or active VPN connections.`,
 				fmt.Println(client.ID)
 			}
 		} else {
+			if !hidePage {
+				err := MarshalAndPrintJSON(page)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+			}
+
 			err := MarshalAndPrintJSON(clients)
 			if err != nil {
 				log.Error(err.Error())
@@ -354,7 +380,7 @@ var listVouchersCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		vouchers, err := c.Network.Vouchers(types.SiteID(args[0]),
+		vouchers, page, err := c.Network.Vouchers(types.SiteID(args[0]),
 			types.Filter(filter), pageArgs)
 		if err != nil {
 			log.Error(err.Error())
@@ -365,6 +391,14 @@ var listVouchersCmd = &cobra.Command{
 				fmt.Println(voucher.ID)
 			}
 		} else {
+			if !hidePage {
+				err := MarshalAndPrintJSON(page)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+			}
+
 			err := MarshalAndPrintJSON(vouchers)
 			if err != nil {
 				log.Error(err.Error())

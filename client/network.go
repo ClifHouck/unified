@@ -155,43 +155,55 @@ func (nc *networkV1Client) Info() (*types.NetworkInfo, error) {
 	return &info, nil
 }
 
-func (nc *networkV1Client) Sites(filter types.Filter, pageArgs *types.PageArguments) ([]*types.Site, error) {
+func (nc *networkV1Client) Sites(filter types.Filter, pageArgs *types.PageArguments) ([]*types.Site, *types.Page, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint: networkAPI["Sites"],
 		Query:    buildQuery(filter, pageArgs),
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var siteListPage *types.SiteListPage
 
 	err = json.Unmarshal(body, &siteListPage)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return siteListPage.Data, nil
+	return siteListPage.Data,
+		&types.Page{
+			Offset:     siteListPage.Offset,
+			Limit:      siteListPage.Limit,
+			Count:      siteListPage.Count,
+			TotalCount: siteListPage.TotalCount,
+		}, nil
 }
 
-func (nc *networkV1Client) Clients(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Client, error) {
+func (nc *networkV1Client) Clients(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Client, *types.Page, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["Clients"],
 		UrlArguments: []any{siteID},
 		Query:        buildQuery(filter, pageArgs),
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var clientListPage *types.ClientListPage
 
 	err = json.Unmarshal(body, &clientListPage)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return clientListPage.Data, nil
+	return clientListPage.Data,
+		&types.Page{
+			Offset:     clientListPage.Offset,
+			Limit:      clientListPage.Limit,
+			Count:      clientListPage.Count,
+			TotalCount: clientListPage.TotalCount,
+		}, nil
 }
 
 func (nc *networkV1Client) ClientDetails(siteID types.SiteID, clientID types.ClientID) (*types.Client, error) {
@@ -233,24 +245,30 @@ func (nc *networkV1Client) ClientExecuteAction(siteID types.SiteID, clientID typ
 	return err
 }
 
-func (nc *networkV1Client) Devices(siteID types.SiteID, pageArgs *types.PageArguments) ([]*types.DeviceListEntry, error) {
+func (nc *networkV1Client) Devices(siteID types.SiteID, pageArgs *types.PageArguments) ([]*types.DeviceListEntry, *types.Page, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["Devices"],
 		UrlArguments: []any{siteID},
 		Query:        buildQuery(types.Filter(""), pageArgs),
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var deviceListPage *types.DeviceListPage
 
 	err = json.Unmarshal(body, &deviceListPage)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return deviceListPage.Data, nil
+	return deviceListPage.Data,
+		&types.Page{
+			Offset:     deviceListPage.Offset,
+			Limit:      deviceListPage.Limit,
+			Count:      deviceListPage.Count,
+			TotalCount: deviceListPage.TotalCount,
+		}, nil
 }
 
 func (nc *networkV1Client) DeviceDetails(siteID types.SiteID, deviceID types.DeviceID) (*types.Device, error) {
@@ -331,24 +349,30 @@ func (nc *networkV1Client) DevicePortExecuteAction(siteID types.SiteID, deviceID
 	return err
 }
 
-func (nc *networkV1Client) Vouchers(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Voucher, error) {
+func (nc *networkV1Client) Vouchers(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Voucher, *types.Page, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["Vouchers"],
 		UrlArguments: []any{siteID},
 		Query:        buildQuery(filter, pageArgs),
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var voucherListPage *types.VoucherListPage
 
 	err = json.Unmarshal(body, &voucherListPage)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return voucherListPage.Data, nil
+	return voucherListPage.Data,
+		&types.Page{
+			Offset:     voucherListPage.Offset,
+			Limit:      voucherListPage.Limit,
+			Count:      voucherListPage.Count,
+			TotalCount: voucherListPage.TotalCount,
+		}, nil
 }
 
 func (nc *networkV1Client) VoucherDetails(siteID types.SiteID, voucherID types.VoucherID) (*types.Voucher, error) {

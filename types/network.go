@@ -9,22 +9,22 @@ type NetworkV1 interface {
 	Info() (*NetworkInfo, error)
 
 	// Sites
-	Sites(Filter, *PageArguments) ([]*Site, error)
+	Sites(Filter, *PageArguments) ([]*Site, *Page, error)
 
 	// Clients
-	Clients(SiteID, Filter, *PageArguments) ([]*Client, error)
+	Clients(SiteID, Filter, *PageArguments) ([]*Client, *Page, error)
 	ClientDetails(SiteID, ClientID) (*Client, error)
 	ClientExecuteAction(SiteID, ClientID, *ClientActionRequest) error
 
 	// Devices
-	Devices(SiteID, *PageArguments) ([]*DeviceListEntry, error)
+	Devices(SiteID, *PageArguments) ([]*DeviceListEntry, *Page, error)
 	DeviceDetails(SiteID, DeviceID) (*Device, error)
 	DeviceStatistics(SiteID, DeviceID) (*DeviceStatistics, error)
 	DeviceExecuteAction(SiteID, DeviceID, *DeviceActionRequest) error
 	DevicePortExecuteAction(SiteID, DeviceID, PortIdx, *DevicePortActionRequest) error
 
 	// Vouchers
-	Vouchers(SiteID, Filter, *PageArguments) ([]*Voucher, error)
+	Vouchers(SiteID, Filter, *PageArguments) ([]*Voucher, *Page, error)
 	VoucherDetails(SiteID, VoucherID) (*Voucher, error)
 	VoucherGenerate(SiteID, *VoucherGenerateRequest) ([]*Voucher, error)
 	VoucherDelete(SiteID, VoucherID) (*VoucherDeleteResponse, error)
