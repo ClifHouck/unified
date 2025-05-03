@@ -1,9 +1,12 @@
-package types
+package types_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/ClifHouck/unified/types"
 )
 
 func TestProtectEventUnmarshalJSON(t *testing.T) {
@@ -19,11 +22,11 @@ func TestProtectEventUnmarshalJSON(t *testing.T) {
 	"type": "ring"
   }
 }`)
-	var event ProtectEvent
+	var event types.ProtectEvent
 	err := event.UnmarshalJSON(rawJSON)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "add", event.Type)
 	assert.Equal(t, "ring", event.ItemType)
-	assert.IsType(t, &RingEvent{}, event.Item)
+	assert.IsType(t, &types.RingEvent{}, event.Item)
 }
