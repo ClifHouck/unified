@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"net/url"
 
 	"github.com/sirupsen/logrus"
 
@@ -102,7 +101,7 @@ var networkAPI = map[string]*apiEndpoint{
 		NumQueryArgs: 3,
 	},
 	"VoucherDetails": &apiEndpoint{
-		UrlFragment: "sites/%s/vouchers/%s",
+		UrlFragment: "sites/%s/hotspot/vouchers/%s",
 		Method:      http.MethodGet,
 		Description: "Get voucher details",
 		Application: "network",
@@ -443,16 +442,10 @@ func (nc *networkV1Client) VoucherDelete(siteID types.SiteID, voucherID types.Vo
 }
 
 func (nc *networkV1Client) VoucherDeleteByFilter(siteID types.SiteID, filter types.Filter) (*types.VoucherDeleteResponse, error) {
-	query := &url.Values{}
-	filterStr := string(filter)
-	if len(filterStr) > 0 {
-		query.Add("filter", string(filter))
-	}
-
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["VoucherDeleteByFilter"],
 		UrlArguments: []any{siteID},
-		Query:        query,
+		Query:        buildQuery(filter, nil),
 	})
 	if err != nil {
 		return nil, err
