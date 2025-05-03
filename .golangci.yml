@@ -439,7 +439,9 @@ linters:
       - text: 'comment on exported \S+ \S+ should be of the form ".+"'
         source: '// ?(nolint|TODO)'
         linters: [ revive, staticcheck ]
-      - path: '_test\.go'
+      - path: '_stream_handler\.go'
+        linters: [ golines ]
+      - path: _test\.go
         linters:
           - bodyclose
           - dupl
