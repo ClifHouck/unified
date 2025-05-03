@@ -93,7 +93,7 @@ func NewClient(ctx context.Context, config *Config, log *logrus.Logger) *Client 
 
 func (c *Client) headers() *http.Header {
 	headers := &http.Header{}
-	headers.Add("X-API-KEY", c.config.ApiKey)
+	headers.Add("X-Api-Key", c.config.ApiKey)
 	headers.Add("Accept", "application/json")
 	headers.Add("Content-Type", "application/json")
 	return headers
@@ -101,7 +101,7 @@ func (c *Client) headers() *http.Header {
 
 func (c *Client) webSocketHeaders() *http.Header {
 	headers := &http.Header{}
-	headers.Add("X-API-KEY", c.config.ApiKey)
+	headers.Add("X-Api-Key", c.config.ApiKey)
 	return headers
 }
 
