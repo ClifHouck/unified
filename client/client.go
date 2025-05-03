@@ -32,10 +32,10 @@ type Config struct {
 	InsecureSkipVerify bool
 }
 
-func NewDefaultConfig(APIKey string) *Config {
+func NewDefaultConfig(apiKey string) *Config {
 	return &Config{
 		Hostname:                   "unifi",
-		APIKey:                     APIKey,
+		APIKey:                     apiKey,
 		WebSocketKeepAliveInterval: time.Second * 30,
 		// Unfortunately, unifi doesn't seem to self-sign for `unifi`, nor
 		// `192.168.1.1` for that matter.
@@ -53,11 +53,17 @@ func (c *Config) IsValid() (bool, []string) {
 	}
 
 	if c.WebSocketKeepAliveInterval < time.Second {
-		reasons = append(reasons, "WebSocketKeepAliveInterval is too short. Must be longer than one second.")
+		reasons = append(
+			reasons,
+			"WebSocketKeepAliveInterval is too short. Must be longer than one second.",
+		)
 	}
 
 	if c.WebSocketKeepAliveInterval > time.Minute*10 {
-		reasons = append(reasons, "WebSocketKeepAliveInterval is too long. Must be shorter than ten minutes.")
+		reasons = append(
+			reasons,
+			"WebSocketKeepAliveInterval is too long. Must be shorter than ten minutes.",
+		)
 	}
 
 	valid := len(reasons) == 0
@@ -147,7 +153,13 @@ func (c *Client) renderURL(req *requestArgs) string {
 		protocol = req.Endpoint.Protocol
 	}
 
-	url := fmt.Sprintf(urlTemplate, protocol, c.config.Hostname, req.Endpoint.Application, renderedFragment)
+	url := fmt.Sprintf(
+		urlTemplate,
+		protocol,
+		c.config.Hostname,
+		req.Endpoint.Application,
+		renderedFragment,
+	)
 
 	// TODO: Some sort of sanity checking on number & keys of query args...
 	if req.Query != nil {
@@ -172,7 +184,12 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 		}).Fatal("Request should have a body but http.NoBody was passed")
 	}
 
-	request, err := http.NewRequestWithContext(c.ctx, req.Endpoint.Method, renderedURL, req.RequestBody)
+	request, err := http.NewRequestWithContext(
+		c.ctx,
+		req.Endpoint.Method,
+		renderedURL,
+		req.RequestBody,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +232,11 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 			}).Error("UniFi application returned an error")
 		}
 
-		return nil, fmt.Errorf("got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedURL)
+		return nil, fmt.Errorf(
+			"got unexpected http code %d when requesting '%s'",
+			resp.StatusCode,
+			renderedURL,
+		)
 	}
 
 	c.log.WithFields(logrus.Fields{

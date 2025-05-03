@@ -13,23 +13,21 @@ import (
 // TODO: Maybe move this to an api module?
 var networkAPI = map[string]*apiEndpoint{
 	// Application related
-	"Info": &apiEndpoint{
+	"Info": {
 		URLFragment: "info",
 		Method:      http.MethodGet,
 		Description: "Get application information",
 		Application: "network",
 	},
-
 	// Site related
-	"Sites": &apiEndpoint{
+	"Sites": {
 		URLFragment: "sites",
 		Method:      http.MethodGet,
 		Description: "List local sites managed by this Network application",
 		Application: "network",
 	},
-
 	/// Client related
-	"Clients": &apiEndpoint{
+	"Clients": {
 		URLFragment:  "sites/%s/clients",
 		Method:       http.MethodGet,
 		Description:  "List clients of a site",
@@ -37,14 +35,14 @@ var networkAPI = map[string]*apiEndpoint{
 		NumURLArgs:   1,
 		NumQueryArgs: 1,
 	},
-	"ClientDetails": &apiEndpoint{
+	"ClientDetails": {
 		URLFragment: "sites/%s/clients/%s",
 		Method:      http.MethodGet,
 		Description: "Get client details",
 		Application: "network",
 		NumURLArgs:  2,
 	},
-	"ClientExecuteAction": &apiEndpoint{
+	"ClientExecuteAction": {
 		URLFragment: "sites/%s/devices/%s/actions",
 		Method:      http.MethodPost,
 		Description: "Execute an action on a device",
@@ -53,28 +51,28 @@ var networkAPI = map[string]*apiEndpoint{
 	},
 
 	// Devices related
-	"Devices": &apiEndpoint{
+	"Devices": {
 		URLFragment: "sites/%s/devices",
 		Method:      http.MethodGet,
 		Description: "List adopted devices of a site",
 		Application: "network",
 		NumURLArgs:  1,
 	},
-	"DeviceDetails": &apiEndpoint{
+	"DeviceDetails": {
 		URLFragment: "sites/%s/devices/%s",
 		Method:      http.MethodGet,
 		Description: "Get device details",
 		Application: "network",
 		NumURLArgs:  2,
 	},
-	"DeviceStatistics": &apiEndpoint{
+	"DeviceStatistics": {
 		URLFragment: "sites/%s/devices/%s/statistics/latest",
 		Method:      http.MethodGet,
 		Description: "Get latest device statistics",
 		Application: "network",
 		NumURLArgs:  2,
 	},
-	"DeviceExecuteAction": &apiEndpoint{
+	"DeviceExecuteAction": {
 		URLFragment:    "sites/%s/devices/%s/actions",
 		Method:         http.MethodPost,
 		Description:    "Execute an action on a device",
@@ -82,7 +80,7 @@ var networkAPI = map[string]*apiEndpoint{
 		NumURLArgs:     2,
 		HasRequestBody: true,
 	},
-	"DevicePortExecuteAction": &apiEndpoint{
+	"DevicePortExecuteAction": {
 		URLFragment:    "sites/%s/devices/%s/actions",
 		Method:         http.MethodPost,
 		Description:    "Execute an action on a device",
@@ -92,7 +90,7 @@ var networkAPI = map[string]*apiEndpoint{
 	},
 
 	// Voucher related
-	"Vouchers": &apiEndpoint{
+	"Vouchers": {
 		URLFragment:  "sites/%s/hotspot/vouchers",
 		Method:       http.MethodGet,
 		Description:  "List vouchers of a site",
@@ -100,14 +98,14 @@ var networkAPI = map[string]*apiEndpoint{
 		NumURLArgs:   1,
 		NumQueryArgs: 3,
 	},
-	"VoucherDetails": &apiEndpoint{
+	"VoucherDetails": {
 		URLFragment: "sites/%s/hotspot/vouchers/%s",
 		Method:      http.MethodGet,
 		Description: "Get voucher details",
 		Application: "network",
 		NumURLArgs:  2,
 	},
-	"VoucherGenerate": &apiEndpoint{
+	"VoucherGenerate": {
 		URLFragment:    "sites/%s/hotspot/vouchers",
 		Method:         http.MethodPost,
 		ExpectedStatus: http.StatusCreated,
@@ -116,14 +114,14 @@ var networkAPI = map[string]*apiEndpoint{
 		NumURLArgs:     1,
 		HasRequestBody: true,
 	},
-	"VoucherDelete": &apiEndpoint{
+	"VoucherDelete": {
 		URLFragment: "sites/%s/hotspot/vouchers/%s",
 		Method:      http.MethodDelete,
 		Description: "Delete vouchers",
 		Application: "network",
 		NumURLArgs:  2,
 	},
-	"VoucherDeleteByFilter": &apiEndpoint{
+	"VoucherDeleteByFilter": {
 		URLFragment:  "sites/%s/hotspot/vouchers",
 		Method:       http.MethodDelete,
 		Description:  "Delete vouchers by filter",
@@ -154,7 +152,10 @@ func (nc *networkV1Client) Info() (*types.NetworkInfo, error) {
 	return &info, nil
 }
 
-func (nc *networkV1Client) Sites(filter types.Filter, pageArgs *types.PageArguments) ([]*types.Site, *types.Page, error) {
+func (nc *networkV1Client) Sites(
+	filter types.Filter,
+	pageArgs *types.PageArguments,
+) ([]*types.Site, *types.Page, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint: networkAPI["Sites"],
 		Query:    buildQuery(filter, pageArgs),
@@ -179,7 +180,11 @@ func (nc *networkV1Client) Sites(filter types.Filter, pageArgs *types.PageArgume
 		}, nil
 }
 
-func (nc *networkV1Client) Clients(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Client, *types.Page, error) {
+func (nc *networkV1Client) Clients(
+	siteID types.SiteID,
+	filter types.Filter,
+	pageArgs *types.PageArguments,
+) ([]*types.Client, *types.Page, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["Clients"],
 		URLArguments: []any{siteID},
@@ -205,7 +210,10 @@ func (nc *networkV1Client) Clients(siteID types.SiteID, filter types.Filter, pag
 		}, nil
 }
 
-func (nc *networkV1Client) ClientDetails(siteID types.SiteID, clientID types.ClientID) (*types.Client, error) {
+func (nc *networkV1Client) ClientDetails(
+	siteID types.SiteID,
+	clientID types.ClientID,
+) (*types.Client, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["ClientDetails"],
 		URLArguments: []any{siteID, clientID},
@@ -224,7 +232,11 @@ func (nc *networkV1Client) ClientDetails(siteID types.SiteID, clientID types.Cli
 	return client, nil
 }
 
-func (nc *networkV1Client) ClientExecuteAction(siteID types.SiteID, clientID types.ClientID, action *types.ClientActionRequest) error {
+func (nc *networkV1Client) ClientExecuteAction(
+	siteID types.SiteID,
+	clientID types.ClientID,
+	action *types.ClientActionRequest,
+) error {
 	jsonBody, err := json.Marshal(action)
 	nc.client.log.WithFields(logrus.Fields{
 		"method": "ClientExecuteAction",
@@ -244,7 +256,10 @@ func (nc *networkV1Client) ClientExecuteAction(siteID types.SiteID, clientID typ
 	return err
 }
 
-func (nc *networkV1Client) Devices(siteID types.SiteID, pageArgs *types.PageArguments) ([]*types.DeviceListEntry, *types.Page, error) {
+func (nc *networkV1Client) Devices(
+	siteID types.SiteID,
+	pageArgs *types.PageArguments,
+) ([]*types.DeviceListEntry, *types.Page, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["Devices"],
 		URLArguments: []any{siteID},
@@ -270,7 +285,10 @@ func (nc *networkV1Client) Devices(siteID types.SiteID, pageArgs *types.PageArgu
 		}, nil
 }
 
-func (nc *networkV1Client) DeviceDetails(siteID types.SiteID, deviceID types.DeviceID) (*types.Device, error) {
+func (nc *networkV1Client) DeviceDetails(
+	siteID types.SiteID,
+	deviceID types.DeviceID,
+) (*types.Device, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["DeviceDetails"],
 		URLArguments: []any{siteID, deviceID},
@@ -289,7 +307,10 @@ func (nc *networkV1Client) DeviceDetails(siteID types.SiteID, deviceID types.Dev
 	return device, nil
 }
 
-func (nc *networkV1Client) DeviceStatistics(siteID types.SiteID, deviceID types.DeviceID) (*types.DeviceStatistics, error) {
+func (nc *networkV1Client) DeviceStatistics(
+	siteID types.SiteID,
+	deviceID types.DeviceID,
+) (*types.DeviceStatistics, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["DeviceStatistics"],
 		URLArguments: []any{siteID, deviceID},
@@ -308,7 +329,11 @@ func (nc *networkV1Client) DeviceStatistics(siteID types.SiteID, deviceID types.
 	return stats, nil
 }
 
-func (nc *networkV1Client) DeviceExecuteAction(siteID types.SiteID, deviceID types.DeviceID, action *types.DeviceActionRequest) error {
+func (nc *networkV1Client) DeviceExecuteAction(
+	siteID types.SiteID,
+	deviceID types.DeviceID,
+	action *types.DeviceActionRequest,
+) error {
 	jsonBody, err := json.Marshal(action)
 	nc.client.log.WithFields(logrus.Fields{
 		"method": "DeviceExecuteAction",
@@ -328,7 +353,12 @@ func (nc *networkV1Client) DeviceExecuteAction(siteID types.SiteID, deviceID typ
 	return err
 }
 
-func (nc *networkV1Client) DevicePortExecuteAction(siteID types.SiteID, deviceID types.DeviceID, port types.PortIdx, action *types.DevicePortActionRequest) error {
+func (nc *networkV1Client) DevicePortExecuteAction(
+	siteID types.SiteID,
+	deviceID types.DeviceID,
+	port types.PortIdx,
+	action *types.DevicePortActionRequest,
+) error {
 	jsonBody, err := json.Marshal(action)
 	nc.client.log.WithFields(logrus.Fields{
 		"method": "DevicePortExecuteAction",
@@ -341,14 +371,18 @@ func (nc *networkV1Client) DevicePortExecuteAction(siteID types.SiteID, deviceID
 	bodyReader := bytes.NewReader(jsonBody)
 	_, err = nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["DevicePortExecuteAction"],
-		URLArguments: []any{siteID, deviceID},
+		URLArguments: []any{siteID, deviceID, port},
 		RequestBody:  bodyReader,
 	})
 
 	return err
 }
 
-func (nc *networkV1Client) Vouchers(siteID types.SiteID, filter types.Filter, pageArgs *types.PageArguments) ([]*types.Voucher, *types.Page, error) {
+func (nc *networkV1Client) Vouchers(
+	siteID types.SiteID,
+	filter types.Filter,
+	pageArgs *types.PageArguments,
+) ([]*types.Voucher, *types.Page, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["Vouchers"],
 		URLArguments: []any{siteID},
@@ -374,7 +408,10 @@ func (nc *networkV1Client) Vouchers(siteID types.SiteID, filter types.Filter, pa
 		}, nil
 }
 
-func (nc *networkV1Client) VoucherDetails(siteID types.SiteID, voucherID types.VoucherID) (*types.Voucher, error) {
+func (nc *networkV1Client) VoucherDetails(
+	siteID types.SiteID,
+	voucherID types.VoucherID,
+) (*types.Voucher, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["VoucherDetails"],
 		URLArguments: []any{siteID, voucherID},
@@ -393,7 +430,10 @@ func (nc *networkV1Client) VoucherDetails(siteID types.SiteID, voucherID types.V
 	return voucher, nil
 }
 
-func (nc *networkV1Client) VoucherGenerate(siteID types.SiteID, request *types.VoucherGenerateRequest) ([]*types.Voucher, error) {
+func (nc *networkV1Client) VoucherGenerate(
+	siteID types.SiteID,
+	request *types.VoucherGenerateRequest,
+) ([]*types.Voucher, error) {
 	jsonBody, err := json.Marshal(request)
 	nc.client.log.WithFields(logrus.Fields{
 		"method": "VoucherGenerate",
@@ -423,7 +463,10 @@ func (nc *networkV1Client) VoucherGenerate(siteID types.SiteID, request *types.V
 	return voucherGenerateResponse.Vouchers, nil
 }
 
-func (nc *networkV1Client) VoucherDelete(siteID types.SiteID, voucherID types.VoucherID) (*types.VoucherDeleteResponse, error) {
+func (nc *networkV1Client) VoucherDelete(
+	siteID types.SiteID,
+	voucherID types.VoucherID,
+) (*types.VoucherDeleteResponse, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["VoucherDelete"],
 		URLArguments: []any{siteID, voucherID},
@@ -441,7 +484,10 @@ func (nc *networkV1Client) VoucherDelete(siteID types.SiteID, voucherID types.Vo
 	return voucherDeleteResponse, nil
 }
 
-func (nc *networkV1Client) VoucherDeleteByFilter(siteID types.SiteID, filter types.Filter) (*types.VoucherDeleteResponse, error) {
+func (nc *networkV1Client) VoucherDeleteByFilter(
+	siteID types.SiteID,
+	filter types.Filter,
+) (*types.VoucherDeleteResponse, error) {
 	body, err := nc.client.doRequest(&requestArgs{
 		Endpoint:     networkAPI["VoucherDeleteByFilter"],
 		URLArguments: []any{siteID},

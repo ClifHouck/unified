@@ -1,6 +1,6 @@
-/*
-Copyright © 2025 Clif Houck <me@clifhouck.com>
-*/
+// Package cmd exposes unifi API command through an CLI interface
+//
+// Copyright © 2025 Clif Houck <me@clifhouck.com>
 package cmd
 
 import (
@@ -79,7 +79,8 @@ func init() {
 	log = logrus.New()
 
 	// Config file.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.unified.yaml)")
+	rootCmd.PersistentFlags().
+		StringVar(&cfgFile, "config", "", "config file (default is $HOME/.unified.yaml)")
 
 	// Universal command flags
 	rootCmd.PersistentFlags().StringVar(&hostname, "host", "unifi",

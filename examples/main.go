@@ -76,7 +76,7 @@ func main() {
 	streamHandler := client.NewProtectEventStreamHandler(ctx, eventChan)
 
 	var handlerMutex sync.Mutex
-	streamHandler.SetRingEventHandler(func(eventType string, event *types.RingEvent) {
+	streamHandler.SetRingEventHandler(func(eventType string, _ *types.RingEvent) {
 		handlerMutex.Lock()
 		defer handlerMutex.Unlock()
 		if eventType == "add" {

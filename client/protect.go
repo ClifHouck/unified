@@ -11,33 +11,33 @@ import (
 )
 
 var protectAPI = map[string]*apiEndpoint{
-	"Info": &apiEndpoint{
+	"Info": {
 		URLFragment: "meta/info",
 		Method:      http.MethodGet,
 		Description: "Get application information",
 		Application: "protect",
 	},
-	"SubscribeProtectEvents": &apiEndpoint{
+	"SubscribeProtectEvents": {
 		URLFragment: "subscribe/events",
 		Method:      http.MethodGet,
 		Description: "Get Protect event messages",
 		Application: "protect",
 		Protocol:    "wss",
 	},
-	"SubscribeDeviceEvents": &apiEndpoint{
+	"SubscribeDeviceEvents": {
 		URLFragment: "subscribe/devices",
 		Method:      http.MethodGet,
 		Description: "Get Protect device updates",
 		Application: "protect",
 		Protocol:    "wss",
 	},
-	"Cameras": &apiEndpoint{
+	"Cameras": {
 		URLFragment: "cameras",
 		Method:      http.MethodGet,
 		Description: "Get all cameras",
 		Application: "protect",
 	},
-	"CameraDetails": &apiEndpoint{
+	"CameraDetails": {
 		URLFragment: "cameras/%s",
 		Method:      http.MethodGet,
 		Description: "Get camera details",

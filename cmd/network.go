@@ -22,9 +22,19 @@ var voucherGenerateReq = &types.VoucherGenerateRequest{}
 func init() {
 	filterFlagSet.StringVar(&filter, "filter", "", "Filter results based on expression")
 
-	listingFlagSet.BoolVar(&idOnly, "id-only", false, "List only the ID of listed entities, one per line.")
+	listingFlagSet.BoolVar(
+		&idOnly,
+		"id-only",
+		false,
+		"List only the ID of listed entities, one per line.",
+	)
 
-	pageFlagSet.BoolVar(&hidePage, "hide-page", false, "Hides the returned current page information")
+	pageFlagSet.BoolVar(
+		&hidePage,
+		"hide-page",
+		false,
+		"Hides the returned current page information",
+	)
 	pageFlagSet.Uint32Var(&pageArgs.Offset, "page-offset", 0, "Offset of page to request")
 	pageFlagSet.Uint32Var(&pageArgs.Limit, "page-limit", 0, "Limit of items per page")
 
@@ -66,11 +76,16 @@ func init() {
 
 	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.Count, "count", 0, "Number of vouchers")
 	voucherGenerateCmd.Flags().StringVar(&voucherGenerateReq.Name, "name", "", "Name of vouchers")
-	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.AuthorizedGuestLimit, "guest-limit", 0, "Authorized guest limit")
-	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.TimeLimitMinutes, "time-limit", 0, "Time limit in minutes")
-	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.DataUsageLimitMBytes, "data-limit", 0, "Data limit in megabytes")
-	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.RxRateLimitKbps, "rx-limit", 0, "Recieve rate limit in kilobytes")
-	voucherGenerateCmd.Flags().IntVar(&voucherGenerateReq.TxRateLimitKbps, "tx-limit", 0, "Transmit rate limit in kilobytes")
+	voucherGenerateCmd.Flags().
+		IntVar(&voucherGenerateReq.AuthorizedGuestLimit, "guest-limit", 0, "Authorized guest limit")
+	voucherGenerateCmd.Flags().
+		IntVar(&voucherGenerateReq.TimeLimitMinutes, "time-limit", 0, "Time limit in minutes")
+	voucherGenerateCmd.Flags().
+		IntVar(&voucherGenerateReq.DataUsageLimitMBytes, "data-limit", 0, "Data limit in megabytes")
+	voucherGenerateCmd.Flags().
+		IntVar(&voucherGenerateReq.RxRateLimitKbps, "rx-limit", 0, "Recieve rate limit in kilobytes")
+	voucherGenerateCmd.Flags().
+		IntVar(&voucherGenerateReq.TxRateLimitKbps, "tx-limit", 0, "Transmit rate limit in kilobytes")
 	vouchersCmd.AddCommand(voucherGenerateCmd)
 
 	vouchersCmd.AddCommand(voucherDeleteCmd)
@@ -453,7 +468,10 @@ var voucherDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(_ *cobra.Command, args []string) {
 		c := getClient()
-		voucherDeleteResp, err := c.Network.VoucherDelete(types.SiteID(args[0]), types.VoucherID(args[1]))
+		voucherDeleteResp, err := c.Network.VoucherDelete(
+			types.SiteID(args[0]),
+			types.VoucherID(args[1]),
+		)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -479,7 +497,10 @@ var voucherDeleteByFilterCmd = &cobra.Command{
 			return
 		}
 
-		voucherDeleteResp, err := c.Network.VoucherDeleteByFilter(types.SiteID(args[0]), types.Filter(filter))
+		voucherDeleteResp, err := c.Network.VoucherDeleteByFilter(
+			types.SiteID(args[0]),
+			types.Filter(filter),
+		)
 		if err != nil {
 			log.Error(err.Error())
 			return

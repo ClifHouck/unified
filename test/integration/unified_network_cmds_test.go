@@ -40,12 +40,26 @@ func helperSeedIDValues(t *testing.T) *TestNetworkIDSet {
 	require.NoError(t, err)
 	idSet.SiteID = strings.Split(string(output), "\n")[0]
 
-	cmd = exec.Command("../../build/unified", "network", "devices", "list", idSet.SiteID, "--id-only")
+	cmd = exec.Command(
+		"../../build/unified",
+		"network",
+		"devices",
+		"list",
+		idSet.SiteID,
+		"--id-only",
+	)
 	output, err = cmd.Output()
 	require.NoError(t, err)
 	idSet.DeviceID = strings.Split(string(output), "\n")[0]
 
-	cmd = exec.Command("../../build/unified", "network", "clients", "list", idSet.SiteID, "--id-only")
+	cmd = exec.Command(
+		"../../build/unified",
+		"network",
+		"clients",
+		"list",
+		idSet.SiteID,
+		"--id-only",
+	)
 	output, err = cmd.Output()
 	require.NoError(t, err)
 	idSet.ClientID = strings.Split(string(output), "\n")[0]
@@ -69,37 +83,37 @@ func TestUnifiedCmdNetworkGETCommands(t *testing.T) {
 	}
 
 	networkTestCases := []*TestCase{
-		&TestCase{
+		{
 			Name:    "Test 'network info'",
 			Command: []string{"network", "info"},
 		},
-		&TestCase{
+		{
 			Name:    "Test 'network sites list'",
 			Command: []string{"network", "sites", "list"},
 		},
-		&TestCase{
+		{
 			Name:      "Test 'network devices list'",
 			Command:   []string{"network", "devices", "list"},
 			NeedsSite: true,
 		},
-		&TestCase{
+		{
 			Name:        "Test 'network devices detail'",
 			Command:     []string{"network", "devices", "details"},
 			NeedsSite:   true,
 			NeedsDevice: true,
 		},
-		&TestCase{
+		{
 			Name:        "Test 'network devices stats'",
 			Command:     []string{"network", "devices", "stats"},
 			NeedsSite:   true,
 			NeedsDevice: true,
 		},
-		&TestCase{
+		{
 			Name:      "Test 'network clients list'",
 			Command:   []string{"network", "clients", "list"},
 			NeedsSite: true,
 		},
-		&TestCase{
+		{
 			Name:        "Test 'network clients details'",
 			Command:     []string{"network", "clients", "details"},
 			NeedsSite:   true,
@@ -176,9 +190,17 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 	}
 
 	voucherTestCases := []*TestCase{
-		&TestCase{
-			Name:    "Test 'vouchers list'",
-			Command: []string{"network", "vouchers", "list", idSet.SiteID, "--hide-page", "--filter", "name.eq('unified-integration-test-vouchers')"},
+		{
+			Name: "Test 'vouchers list'",
+			Command: []string{
+				"network",
+				"vouchers",
+				"list",
+				idSet.SiteID,
+				"--hide-page",
+				"--filter",
+				"name.eq('unified-integration-test-vouchers')",
+			},
 			Case: func(t *testing.T, output []byte) {
 				var vouchers []*types.Voucher
 				err := json.Unmarshal(output, &vouchers)
@@ -187,7 +209,7 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 				assert.Equal(t, voucherName, vouchers[0].Name)
 			},
 		},
-		&TestCase{
+		{
 			Name:    "Test 'vouchers details'",
 			Command: []string{"network", "vouchers", "details", idSet.SiteID, vouchers[0].ID},
 			Case: func(t *testing.T, output []byte) {
@@ -198,7 +220,7 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 				assert.Equal(t, vouchers[0].Name, voucher.Name)
 			},
 		},
-		&TestCase{
+		{
 			Name:    "Test 'vouchers delete'",
 			Command: []string{"network", "vouchers", "delete", idSet.SiteID, vouchers[0].ID},
 			Case: func(t *testing.T, output []byte) {
@@ -208,9 +230,16 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 				assert.Equal(t, 1, voucherDeleteResp.VouchersDeleted)
 			},
 		},
-		&TestCase{
-			Name:    "Test 'vouchers delete-filter'",
-			Command: []string{"network", "vouchers", "delete-filter", idSet.SiteID, "--filter", "name.eq('unified-integration-test-vouchers')"},
+		{
+			Name: "Test 'vouchers delete-filter'",
+			Command: []string{
+				"network",
+				"vouchers",
+				"delete-filter",
+				idSet.SiteID,
+				"--filter",
+				"name.eq('unified-integration-test-vouchers')",
+			},
 			Case: func(t *testing.T, output []byte) {
 				var voucherDeleteResp *types.VoucherDeleteResponse
 				err := json.Unmarshal(output, &voucherDeleteResp)
@@ -218,9 +247,17 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 				assert.Equal(t, numVouchers-1, voucherDeleteResp.VouchersDeleted)
 			},
 		},
-		&TestCase{
-			Name:    "Test 'vouchers list' is now empty",
-			Command: []string{"network", "vouchers", "list", idSet.SiteID, "--hide-page", "--filter", "name.eq('unified-integration-test-vouchers')"},
+		{
+			Name: "Test 'vouchers list' is now empty",
+			Command: []string{
+				"network",
+				"vouchers",
+				"list",
+				idSet.SiteID,
+				"--hide-page",
+				"--filter",
+				"name.eq('unified-integration-test-vouchers')",
+			},
 			Case: func(t *testing.T, output []byte) {
 				err := json.Unmarshal(output, &vouchers)
 				require.NoError(t, err)
