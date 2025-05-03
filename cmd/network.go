@@ -141,6 +141,7 @@ and prints the results to stdout.`,
 			log.Error(err.Error())
 			return
 		}
+
 		if idOnly {
 			for _, device := range devices {
 				if idOnly {
@@ -149,14 +150,14 @@ and prints the results to stdout.`,
 			}
 		} else {
 			if !hidePage {
-				err := MarshalAndPrintJSON(page)
+				err = MarshalAndPrintJSON(page)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
 			}
 
-			err := MarshalAndPrintJSON(devices)
+			err = MarshalAndPrintJSON(devices)
 			if err != nil {
 				log.Error(err.Error())
 				return
@@ -279,14 +280,14 @@ while if option is disabled it will return just the default site.`,
 			}
 		} else {
 			if !hidePage {
-				err := MarshalAndPrintJSON(page)
+				err = MarshalAndPrintJSON(page)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
 			}
 
-			err := MarshalAndPrintJSON(sites)
+			err = MarshalAndPrintJSON(sites)
 			if err != nil {
 				log.Error(err.Error())
 				return
@@ -318,14 +319,14 @@ or active VPN connections.`,
 			}
 		} else {
 			if !hidePage {
-				err := MarshalAndPrintJSON(page)
+				err = MarshalAndPrintJSON(page)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
 			}
 
-			err := MarshalAndPrintJSON(clients)
+			err = MarshalAndPrintJSON(clients)
 			if err != nil {
 				log.Error(err.Error())
 				return
@@ -392,14 +393,14 @@ var listVouchersCmd = &cobra.Command{
 			}
 		} else {
 			if !hidePage {
-				err := MarshalAndPrintJSON(page)
+				err = MarshalAndPrintJSON(page)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
 			}
 
-			err := MarshalAndPrintJSON(vouchers)
+			err = MarshalAndPrintJSON(vouchers)
 			if err != nil {
 				log.Error(err.Error())
 				return

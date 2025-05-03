@@ -83,7 +83,7 @@ var deviceEventsCmd = &cobra.Command{
 				}
 
 				var item types.ProtectDeviceEventItem
-				err := json.Unmarshal(streamEvent.RawItem, &item)
+				err = json.Unmarshal(streamEvent.RawItem, &item)
 				if err != nil {
 					log.Error("Couldn't parse RawItem!")
 					log.Error(err.Error())
@@ -130,7 +130,7 @@ var protectEventsCmd = &cobra.Command{
 				}
 
 				var item types.ProtectEventItem
-				err := json.Unmarshal(streamEvent.RawItem, &item)
+				err = json.Unmarshal(streamEvent.RawItem, &item)
 				if err != nil {
 					log.Error("Couldn't parse RawItem!")
 					log.Error(err.Error())
@@ -173,7 +173,7 @@ var cameraListCmd = &cobra.Command{
 				}
 			}
 		} else {
-			err := MarshalAndPrintJSON(cameras)
+			err = MarshalAndPrintJSON(cameras)
 			if err != nil {
 				log.Error(err.Error())
 				return

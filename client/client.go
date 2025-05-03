@@ -183,12 +183,12 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 	}
 
 	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
+		closeErr := resp.Body.Close()
+		if closeErr != nil {
 			c.log.WithFields(logrus.Fields{
 				"url":    renderedUrl,
 				"status": resp.StatusCode,
-			}).Errorf("Error closing response body: %s", err.Error())
+			}).Errorf("Error closing response body: %s", closeErr.Error())
 		}
 	}()
 

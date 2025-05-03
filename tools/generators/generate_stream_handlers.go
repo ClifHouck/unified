@@ -168,7 +168,7 @@ func renderStreamHandlerToFile(args *StreamHandlerArguments) error {
 		"imports",
 		"streamHandlerStructBegin",
 	} {
-		err := templates[templateName].Execute(outFile, args)
+		err = templates[templateName].Execute(outFile, args)
 		if err != nil {
 			return err
 		}
@@ -177,7 +177,7 @@ func renderStreamHandlerToFile(args *StreamHandlerArguments) error {
 	for _, eventTypeName := range eventTypeNames {
 		args.EventType = eventTypeName
 		args.EventTypeFirstLower = strings.ToLower(eventTypeName[:1]) + eventTypeName[1:]
-		err := templates["streamHandlerStructEventTypeMembers"].Execute(outFile, args)
+		err = templates["streamHandlerStructEventTypeMembers"].Execute(outFile, args)
 		if err != nil {
 			return err
 		}
@@ -188,7 +188,7 @@ func renderStreamHandlerToFile(args *StreamHandlerArguments) error {
 		"newStreamHandlerObjectFunction",
 		"processStreamMethodBegin",
 	} {
-		err := templates[templateName].Execute(outFile, args)
+		err = templates[templateName].Execute(outFile, args)
 		if err != nil {
 			return err
 		}
@@ -197,7 +197,7 @@ func renderStreamHandlerToFile(args *StreamHandlerArguments) error {
 	for _, eventTypeName := range eventTypeNames {
 		args.EventType = eventTypeName
 		args.EventTypeFirstLower = strings.ToLower(eventTypeName[:1]) + eventTypeName[1:]
-		err := templates["processStreamCase"].Execute(outFile, args)
+		err = templates["processStreamCase"].Execute(outFile, args)
 		if err != nil {
 			return err
 		}
@@ -211,7 +211,7 @@ func renderStreamHandlerToFile(args *StreamHandlerArguments) error {
 	for _, eventTypeName := range eventTypeNames {
 		args.EventType = eventTypeName
 		args.EventTypeFirstLower = strings.ToLower(eventTypeName[:1]) + eventTypeName[1:]
-		err := templates["setEventHandlerMethod"].Execute(outFile, args)
+		err = templates["setEventHandlerMethod"].Execute(outFile, args)
 		if err != nil {
 			return err
 		}

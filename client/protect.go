@@ -133,11 +133,11 @@ func (pc *protectV1Client) SubscribeProtectEvents() (<-chan *types.ProtectEvent,
 			default:
 			}
 
-			messageType, data, err := conn.Read(pc.client.ctx)
-			if err != nil {
+			messageType, data, readErr := conn.Read(pc.client.ctx)
+			if readErr != nil {
 				pc.client.log.WithFields(logrus.Fields{
 					"url":   url,
-					"error": err.Error(),
+					"error": readErr.Error(),
 				}).Error("WebSocket Read returned error")
 				close(eventChan)
 				return
@@ -202,11 +202,11 @@ func (pc *protectV1Client) SubscribeDeviceEvents() (<-chan *types.ProtectDeviceE
 			default:
 			}
 
-			messageType, data, err := conn.Read(pc.client.ctx)
-			if err != nil {
+			messageType, data, readErr := conn.Read(pc.client.ctx)
+			if readErr != nil {
 				pc.client.log.WithFields(logrus.Fields{
 					"url":   url,
-					"error": err.Error(),
+					"error": readErr.Error(),
 				}).Error("json.Unmarshal returned error")
 				close(eventChan)
 				return
@@ -221,8 +221,8 @@ func (pc *protectV1Client) SubscribeDeviceEvents() (<-chan *types.ProtectDeviceE
 			}
 
 			var protectDeviceUpdate *types.ProtectDeviceEvent
-			err = json.Unmarshal(data, &protectDeviceUpdate)
-			if err != nil {
+			unmarshalErr := json.Unmarshal(data, &protectDeviceUpdate)
+			if unmarshalErr != nil {
 				pc.client.log.WithFields(logrus.Fields{
 					"url":   url,
 					"error": err.Error(),
