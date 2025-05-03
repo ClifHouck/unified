@@ -22,6 +22,7 @@ formatters:
   enable:
     - goimports # checks if the code and import statements are formatted according to the 'goimports' command
     - golines # checks if code is formatted, and fixes long lines
+    - gofmt
 
     ## you may want to enable
     #- gci # checks if code and import statements are formatted, with additional rules
