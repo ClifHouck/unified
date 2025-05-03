@@ -1,13 +1,15 @@
 package main
 
-import "text/template"
-import "os"
-import "strings"
-import "reflect"
+import (
+	"os"
+	"reflect"
+	"strings"
+	"text/template"
 
-import log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
-import "github.com/ClifHouck/unified/types"
+	"github.com/ClifHouck/unified/types"
+)
 
 type StreamHandlerArguments struct {
 	PackageName         string

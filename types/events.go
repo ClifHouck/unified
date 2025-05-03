@@ -1,8 +1,9 @@
 package types
 
-import "fmt"
-
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type ProtectEvent struct {
 	Type string `json:"type"`

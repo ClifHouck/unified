@@ -1,5 +1,5 @@
 /*
-  Copyright © 2025 Clif Houck <me@clifhouck.com>
+Copyright © 2025 Clif Houck <me@clifhouck.com>
 */
 package cmd
 
