@@ -81,7 +81,8 @@ func NewClient(ctx context.Context, config *Config, log *logrus.Logger) *Client 
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: config.InsecureSkipVerify,
+					// TODO: Figure out how to always enable TLS verification!
+					InsecureSkipVerify: config.InsecureSkipVerify, //nolint:gosec,G402
 				},
 			},
 		},
