@@ -85,7 +85,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&hostname, "host", "unifi",
 		"Hostname of UniFi API")
 	// TODO: Maybe only expose this for websocket calls
-	rootCmd.PersistentFlags().DurationVar(&keepAliveInterval, "keep-alive-interval", time.Duration(time.Second*30),
+	rootCmd.PersistentFlags().DurationVar(&keepAliveInterval, "keep-alive-interval", time.Second*30,
 		"Interval between keep-alive pings sent for websocket streams")
 	rootCmd.PersistentFlags().BoolVar(&insecureSkipVerify, "insecure", true,
 		"Skip verification of UniFi TLS certificate.")
