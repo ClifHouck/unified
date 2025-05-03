@@ -47,7 +47,7 @@ var protectInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Get protect application info",
 	Long:  `Get generic information about the Protect application`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		c := getClient()
 		info, err := c.Protect.Info()
 		if err != nil {
@@ -65,7 +65,7 @@ var protectInfoCmd = &cobra.Command{
 var deviceEventsCmd = &cobra.Command{
 	Use:   "device-events",
 	Short: "Stream device events from Protect API",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		c := getClient()
 		events, err := c.Protect.SubscribeDeviceEvents()
 		if err != nil {
@@ -112,7 +112,7 @@ var deviceEventsCmd = &cobra.Command{
 var protectEventsCmd = &cobra.Command{
 	Use:   "protect-events",
 	Short: "Stream protect events from Protect API",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		c := getClient()
 		events, err := c.Protect.SubscribeProtectEvents()
 		if err != nil {
@@ -159,7 +159,7 @@ var protectEventsCmd = &cobra.Command{
 var cameraListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List adopted Protect cameras",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		c := getClient()
 		cameras, err := c.Protect.Cameras()
 		if err != nil {
@@ -186,7 +186,7 @@ var cameraDetailsCmd = &cobra.Command{
 	Use:   "details [camera ID]",
 	Short: "Get detailed information about a specific adopted device",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, args []string) {
 		c := getClient()
 		camera, err := c.Protect.CameraDetails(types.CameraID(args[0]))
 		if err != nil {

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	UNIFIED_BINARY = "../../build/unified"
+	unifiedBinary = "../../build/unified"
 )
 
 func checkForUniFiAPIHostSkip(t *testing.T) {
@@ -122,11 +122,11 @@ func TestUnifiedCmdNetworkGETCommands(t *testing.T) {
 
 			tc.Command = append(tc.Command, "--debug")
 
-			fullCmd := []string{UNIFIED_BINARY}
+			fullCmd := []string{unifiedBinary}
 			fullCmd = append(fullCmd, tc.Command...)
 			fmt.Println("Running Command: '" + strings.Join(fullCmd, " ") + "'")
 
-			cmd := exec.Command(UNIFIED_BINARY, tc.Command...)
+			cmd := exec.Command(unifiedBinary, tc.Command...)
 			output, err := cmd.Output()
 			require.NoError(t, err)
 			fmt.Print(string(output))
@@ -146,7 +146,7 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 	var vouchers []types.Voucher
 	setup := false
 	t.Run("Voucher setup", func(t *testing.T) {
-		cmd := exec.Command(UNIFIED_BINARY, "network", "vouchers", "generate", idSet.SiteID,
+		cmd := exec.Command(unifiedBinary, "network", "vouchers", "generate", idSet.SiteID,
 			"--count", voucherCount,
 			"--rx-limit", "2",
 			"--tx-limit", "2",
@@ -231,12 +231,12 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 
 	for _, tc := range voucherTestCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			fullCmd := []string{UNIFIED_BINARY}
+			fullCmd := []string{unifiedBinary}
 			tc.Command = append(tc.Command, "--debug")
 			fullCmd = append(fullCmd, tc.Command...)
 			fmt.Println("Running Command: '" + strings.Join(fullCmd, " ") + "'")
 
-			cmd := exec.Command(UNIFIED_BINARY, tc.Command...)
+			cmd := exec.Command(unifiedBinary, tc.Command...)
 			output, err := cmd.Output()
 			require.NoError(t, err)
 			fmt.Print(string(output))

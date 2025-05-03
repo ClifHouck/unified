@@ -38,7 +38,7 @@ var (
 func getClientConfig() *client.Config {
 	config := &client.Config{
 		Hostname:                   hostname,
-		ApiKey:                     apiKey,
+		APIKey:                     apiKey,
 		WebSocketKeepAliveInterval: keepAliveInterval,
 		InsecureSkipVerify:         insecureSkipVerify,
 	}

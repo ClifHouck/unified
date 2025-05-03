@@ -181,7 +181,7 @@ type CameraSmartDetectLoiterEvent struct {
 	SmartDetectTypes []string `json:"smartDetectTypes"`
 }
 
-var ALL_PROTECT_EVENTS = []interface{}{
+var AllProtectEvents = []interface{}{
 	RingEvent{},
 	SensorExtremeValuesEvent{},
 	SensorWaterLeakEvent{},
@@ -221,6 +221,6 @@ type ProtectAddCameraEvent struct {
 	// FIXME: Add the reset of device events!
 }
 
-var ALL_PROTECT_DEVICE_EVENTS = []interface{}{
+var AllProtectDeviceEvents = []interface{}{
 	ProtectAddCameraEvent{},
 }
