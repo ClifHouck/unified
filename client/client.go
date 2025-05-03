@@ -45,7 +45,9 @@ func NewDefaultConfig(apiKey string) *Config {
 
 // Returns true if config is valid, false otherwise along with a list of
 // reasons verification failed.
-func (c *Config) IsValid() (valid bool, reasons []string) {
+func (c *Config) IsValid() (bool, []string) {
+	reasons := []string{}
+
 	if c.ApiKey == "" {
 		reasons = append(reasons, "ApiKey must not be empty")
 	}
@@ -58,7 +60,7 @@ func (c *Config) IsValid() (valid bool, reasons []string) {
 		reasons = append(reasons, "WebSocketKeepAliveInterval is too long. Must be shorter than ten minutes.")
 	}
 
-	valid = len(reasons) == 0
+	valid := len(reasons) == 0
 	return valid, reasons
 }
 
