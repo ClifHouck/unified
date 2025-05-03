@@ -57,8 +57,7 @@ func (esh *ProtectDeviceEventStreamHandler) processStream() {
 			}).Info("Received ProtectDeviceEvent")
 
 			switch event := streamEvent.Item.(type) {
-
-			case *types.ProtectAddCameraEvent:
+case *types.ProtectAddCameraEvent:
 				go esh.invokeProtectAddCameraEventHandler(streamEvent.Type, event)
 
 			default:

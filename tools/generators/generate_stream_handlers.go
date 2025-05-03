@@ -93,8 +93,7 @@ func (esh *{{.StreamType}}StreamHandler) processStream() {
 			switch event := streamEvent.Item.(type) {
 `
 
-const PROCESS_STREAM_CASE = `
-			case *types.{{.EventType}}:
+const PROCESS_STREAM_CASE = `case *types.{{.EventType}}:
 				go esh.invoke{{.EventType}}Handler(streamEvent.Type, event)
 `
 

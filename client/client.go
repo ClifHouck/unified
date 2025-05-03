@@ -254,7 +254,6 @@ func buildQuery(filter types.Filter, pageArgs *types.PageArguments) *url.Values 
 	if pageArgs != nil {
 		if pageArgs.Limit != 0 {
 			query.Add("limit", strconv.FormatUint(uint64(pageArgs.Limit), 10))
-
 		}
 		if pageArgs.Offset != 0 {
 			query.Add("offset", strconv.FormatUint(uint64(pageArgs.Offset), 10))

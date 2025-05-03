@@ -96,47 +96,33 @@ func (esh *ProtectEventStreamHandler) processStream() {
 			}).Info("Received ProtectEvent")
 
 			switch event := streamEvent.Item.(type) {
-
-			case *types.RingEvent:
+case *types.RingEvent:
 				go esh.invokeRingEventHandler(streamEvent.Type, event)
-
-			case *types.SensorExtremeValuesEvent:
+case *types.SensorExtremeValuesEvent:
 				go esh.invokeSensorExtremeValuesEventHandler(streamEvent.Type, event)
-
-			case *types.SensorWaterLeakEvent:
+case *types.SensorWaterLeakEvent:
 				go esh.invokeSensorWaterLeakEventHandler(streamEvent.Type, event)
-
-			case *types.SensorTamperEvent:
+case *types.SensorTamperEvent:
 				go esh.invokeSensorTamperEventHandler(streamEvent.Type, event)
-
-			case *types.SensorBatteryLowEvent:
+case *types.SensorBatteryLowEvent:
 				go esh.invokeSensorBatteryLowEventHandler(streamEvent.Type, event)
-
-			case *types.SensorAlarmEvent:
+case *types.SensorAlarmEvent:
 				go esh.invokeSensorAlarmEventHandler(streamEvent.Type, event)
-
-			case *types.SensorOpenedEvent:
+case *types.SensorOpenedEvent:
 				go esh.invokeSensorOpenedEventHandler(streamEvent.Type, event)
-
-			case *types.SensorClosedEvent:
+case *types.SensorClosedEvent:
 				go esh.invokeSensorClosedEventHandler(streamEvent.Type, event)
-
-			case *types.LightMotionEvent:
+case *types.LightMotionEvent:
 				go esh.invokeLightMotionEventHandler(streamEvent.Type, event)
-
-			case *types.CameraMotionEvent:
+case *types.CameraMotionEvent:
 				go esh.invokeCameraMotionEventHandler(streamEvent.Type, event)
-
-			case *types.CameraSmartDetectAudioEvent:
+case *types.CameraSmartDetectAudioEvent:
 				go esh.invokeCameraSmartDetectAudioEventHandler(streamEvent.Type, event)
-
-			case *types.CameraSmartDetectZoneEvent:
+case *types.CameraSmartDetectZoneEvent:
 				go esh.invokeCameraSmartDetectZoneEventHandler(streamEvent.Type, event)
-
-			case *types.CameraSmartDetectLineEvent:
+case *types.CameraSmartDetectLineEvent:
 				go esh.invokeCameraSmartDetectLineEventHandler(streamEvent.Type, event)
-
-			case *types.CameraSmartDetectLoiterEvent:
+case *types.CameraSmartDetectLoiterEvent:
 				go esh.invokeCameraSmartDetectLoiterEventHandler(streamEvent.Type, event)
 
 			default:
