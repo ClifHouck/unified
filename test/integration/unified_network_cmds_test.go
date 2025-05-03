@@ -1,4 +1,4 @@
-package integration
+package integration_test
 
 import (
 	"encoding/json"
@@ -9,12 +9,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ClifHouck/unified/types"
 )
 
 const (
-	UNIFIED_BINARY = "../../build/unified"
+	unifiedBinary = "../../build/unified"
 )
 
 func checkForUniFiAPIHostSkip(t *testing.T) {
@@ -36,17 +37,31 @@ func helperSeedIDValues(t *testing.T) *TestNetworkIDSet {
 
 	cmd := exec.Command("../../build/unified", "network", "sites", "list", "--id-only")
 	output, err := cmd.Output()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	idSet.SiteID = strings.Split(string(output), "\n")[0]
 
-	cmd = exec.Command("../../build/unified", "network", "devices", "list", idSet.SiteID, "--id-only")
+	cmd = exec.Command(
+		"../../build/unified",
+		"network",
+		"devices",
+		"list",
+		idSet.SiteID,
+		"--id-only",
+	)
 	output, err = cmd.Output()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	idSet.DeviceID = strings.Split(string(output), "\n")[0]
 
-	cmd = exec.Command("../../build/unified", "network", "clients", "list", idSet.SiteID, "--id-only")
+	cmd = exec.Command(
+		"../../build/unified",
+		"network",
+		"clients",
+		"list",
+		idSet.SiteID,
+		"--id-only",
+	)
 	output, err = cmd.Output()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	idSet.ClientID = strings.Split(string(output), "\n")[0]
 
 	return &idSet
@@ -68,37 +83,37 @@ func TestUnifiedCmdNetworkGETCommands(t *testing.T) {
 	}
 
 	networkTestCases := []*TestCase{
-		&TestCase{
+		{
 			Name:    "Test 'network info'",
 			Command: []string{"network", "info"},
 		},
-		&TestCase{
+		{
 			Name:    "Test 'network sites list'",
 			Command: []string{"network", "sites", "list"},
 		},
-		&TestCase{
+		{
 			Name:      "Test 'network devices list'",
 			Command:   []string{"network", "devices", "list"},
 			NeedsSite: true,
 		},
-		&TestCase{
+		{
 			Name:        "Test 'network devices detail'",
 			Command:     []string{"network", "devices", "details"},
 			NeedsSite:   true,
 			NeedsDevice: true,
 		},
-		&TestCase{
+		{
 			Name:        "Test 'network devices stats'",
 			Command:     []string{"network", "devices", "stats"},
 			NeedsSite:   true,
 			NeedsDevice: true,
 		},
-		&TestCase{
+		{
 			Name:      "Test 'network clients list'",
 			Command:   []string{"network", "clients", "list"},
 			NeedsSite: true,
 		},
-		&TestCase{
+		{
 			Name:        "Test 'network clients details'",
 			Command:     []string{"network", "clients", "details"},
 			NeedsSite:   true,
@@ -121,13 +136,13 @@ func TestUnifiedCmdNetworkGETCommands(t *testing.T) {
 
 			tc.Command = append(tc.Command, "--debug")
 
-			fullCmd := []string{UNIFIED_BINARY}
+			fullCmd := []string{unifiedBinary}
 			fullCmd = append(fullCmd, tc.Command...)
 			fmt.Println("Running Command: '" + strings.Join(fullCmd, " ") + "'")
 
-			cmd := exec.Command(UNIFIED_BINARY, tc.Command...)
+			cmd := exec.Command(unifiedBinary, tc.Command...)
 			output, err := cmd.Output()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			fmt.Print(string(output))
 		})
 	}
@@ -145,7 +160,7 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 	var vouchers []types.Voucher
 	setup := false
 	t.Run("Voucher setup", func(t *testing.T) {
-		cmd := exec.Command(UNIFIED_BINARY, "network", "vouchers", "generate", idSet.SiteID,
+		cmd := exec.Command(unifiedBinary, "network", "vouchers", "generate", idSet.SiteID,
 			"--count", voucherCount,
 			"--rx-limit", "2",
 			"--tx-limit", "2",
@@ -155,12 +170,12 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 			"--data-limit", "100")
 		output, err := cmd.Output()
 		fmt.Print(string(output))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = json.Unmarshal(output, &vouchers)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.Equal(t, numVouchers, len(vouchers))
+		assert.Len(t, vouchers, numVouchers)
 
 		setup = true
 	})
@@ -175,54 +190,77 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 	}
 
 	voucherTestCases := []*TestCase{
-		&TestCase{
-			Name:    "Test 'vouchers list'",
-			Command: []string{"network", "vouchers", "list", idSet.SiteID, "--hide-page", "--filter", "name.eq('unified-integration-test-vouchers')"},
+		{
+			Name: "Test 'vouchers list'",
+			Command: []string{
+				"network",
+				"vouchers",
+				"list",
+				idSet.SiteID,
+				"--hide-page",
+				"--filter",
+				"name.eq('unified-integration-test-vouchers')",
+			},
 			Case: func(t *testing.T, output []byte) {
 				var vouchers []*types.Voucher
 				err := json.Unmarshal(output, &vouchers)
-				assert.NoError(t, err)
-				assert.Equal(t, numVouchers, len(vouchers))
+				require.NoError(t, err)
+				assert.Len(t, vouchers, numVouchers)
 				assert.Equal(t, voucherName, vouchers[0].Name)
 			},
 		},
-		&TestCase{
+		{
 			Name:    "Test 'vouchers details'",
 			Command: []string{"network", "vouchers", "details", idSet.SiteID, vouchers[0].ID},
 			Case: func(t *testing.T, output []byte) {
 				var voucher *types.Voucher
 				err := json.Unmarshal(output, &voucher)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, vouchers[0].ID, voucher.ID)
 				assert.Equal(t, vouchers[0].Name, voucher.Name)
 			},
 		},
-		&TestCase{
+		{
 			Name:    "Test 'vouchers delete'",
 			Command: []string{"network", "vouchers", "delete", idSet.SiteID, vouchers[0].ID},
 			Case: func(t *testing.T, output []byte) {
 				var voucherDeleteResp *types.VoucherDeleteResponse
 				err := json.Unmarshal(output, &voucherDeleteResp)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, 1, voucherDeleteResp.VouchersDeleted)
 			},
 		},
-		&TestCase{
-			Name:    "Test 'vouchers delete-filter'",
-			Command: []string{"network", "vouchers", "delete-filter", idSet.SiteID, "--filter", "name.eq('unified-integration-test-vouchers')"},
+		{
+			Name: "Test 'vouchers delete-filter'",
+			Command: []string{
+				"network",
+				"vouchers",
+				"delete-filter",
+				idSet.SiteID,
+				"--filter",
+				"name.eq('unified-integration-test-vouchers')",
+			},
 			Case: func(t *testing.T, output []byte) {
 				var voucherDeleteResp *types.VoucherDeleteResponse
 				err := json.Unmarshal(output, &voucherDeleteResp)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, numVouchers-1, voucherDeleteResp.VouchersDeleted)
 			},
 		},
-		&TestCase{
-			Name:    "Test 'vouchers list' is now empty",
-			Command: []string{"network", "vouchers", "list", idSet.SiteID, "--hide-page", "--filter", "name.eq('unified-integration-test-vouchers')"},
+		{
+			Name: "Test 'vouchers list' is now empty",
+			Command: []string{
+				"network",
+				"vouchers",
+				"list",
+				idSet.SiteID,
+				"--hide-page",
+				"--filter",
+				"name.eq('unified-integration-test-vouchers')",
+			},
 			Case: func(t *testing.T, output []byte) {
 				err := json.Unmarshal(output, &vouchers)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Empty(t, vouchers)
 			},
 		},
@@ -230,14 +268,14 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 
 	for _, tc := range voucherTestCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			fullCmd := []string{UNIFIED_BINARY}
+			fullCmd := []string{unifiedBinary}
 			tc.Command = append(tc.Command, "--debug")
 			fullCmd = append(fullCmd, tc.Command...)
 			fmt.Println("Running Command: '" + strings.Join(fullCmd, " ") + "'")
 
-			cmd := exec.Command(UNIFIED_BINARY, tc.Command...)
+			cmd := exec.Command(unifiedBinary, tc.Command...)
 			output, err := cmd.Output()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			fmt.Print(string(output))
 			tc.Case(t, output)
 		})

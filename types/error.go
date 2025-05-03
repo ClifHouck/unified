@@ -10,5 +10,5 @@ type Error struct {
 	Message     string    `json:"message"`
 	Timestamp   time.Time `json:"timestamp"`
 	RequestPath string    `json:"requestPath"`
-	RequestId   string    `json:"requestId"`
+	RequestID   string    `json:"requestId"`
 }

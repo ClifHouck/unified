@@ -15,7 +15,7 @@ type ProtectV1 interface {
 	// TODO: Rest of protect API!
 }
 
-// Interestingly NOT a UUID
+// CameraID is a UniFI protect Camera ID. Interestingly *not* a UUID.
 type CameraID string
 
 type ProtectInfo struct {

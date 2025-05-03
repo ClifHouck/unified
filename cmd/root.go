@@ -1,6 +1,6 @@
-/*
-  Copyright © 2025 Clif Houck <me@clifhouck.com>
-*/
+// Package cmd exposes unifi API command through an CLI interface
+//
+// Copyright © 2025 Clif Houck <me@clifhouck.com>
 package cmd
 
 import (
@@ -38,7 +38,7 @@ var (
 func getClientConfig() *client.Config {
 	config := &client.Config{
 		Hostname:                   hostname,
-		ApiKey:                     apiKey,
+		APIKey:                     apiKey,
 		WebSocketKeepAliveInterval: keepAliveInterval,
 		InsecureSkipVerify:         insecureSkipVerify,
 	}
@@ -79,13 +79,14 @@ func init() {
 	log = logrus.New()
 
 	// Config file.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.unified.yaml)")
+	rootCmd.PersistentFlags().
+		StringVar(&cfgFile, "config", "", "config file (default is $HOME/.unified.yaml)")
 
 	// Universal command flags
 	rootCmd.PersistentFlags().StringVar(&hostname, "host", "unifi",
 		"Hostname of UniFi API")
 	// TODO: Maybe only expose this for websocket calls
-	rootCmd.PersistentFlags().DurationVar(&keepAliveInterval, "keep-alive-interval", time.Duration(time.Second*30),
+	rootCmd.PersistentFlags().DurationVar(&keepAliveInterval, "keep-alive-interval", time.Second*30,
 		"Interval between keep-alive pings sent for websocket streams")
 	rootCmd.PersistentFlags().BoolVar(&insecureSkipVerify, "insecure", true,
 		"Skip verification of UniFi TLS certificate.")

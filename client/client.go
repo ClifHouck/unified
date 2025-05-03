@@ -17,14 +17,14 @@ import (
 	"github.com/ClifHouck/unified/types"
 )
 
-const URL_TEMPLATE string = "%s://%s/proxy/%s/integration/v1/%s"
+const urlTemplate string = "%s://%s/proxy/%s/integration/v1/%s"
 
 type Config struct {
 	// The hostname of the unifi control plane.
 	Hostname string
 	// API key issued by unifi control plane. Must be included in requests
 	// for authorization.
-	ApiKey string
+	APIKey string
 	// Controls the interval between keep-alive pings for websocket
 	// connections.
 	WebSocketKeepAliveInterval time.Duration
@@ -35,7 +35,7 @@ type Config struct {
 func NewDefaultConfig(apiKey string) *Config {
 	return &Config{
 		Hostname:                   "unifi",
-		ApiKey:                     apiKey,
+		APIKey:                     apiKey,
 		WebSocketKeepAliveInterval: time.Second * 30,
 		// Unfortunately, unifi doesn't seem to self-sign for `unifi`, nor
 		// `192.168.1.1` for that matter.
@@ -43,22 +43,30 @@ func NewDefaultConfig(apiKey string) *Config {
 	}
 }
 
-// Returns true if config is valid, false otherwise along with a list of
+// IsValid returns true if config is valid, and false otherwise. Also returns a list of
 // reasons verification failed.
-func (c *Config) IsValid() (valid bool, reasons []string) {
-	if c.ApiKey == "" {
-		reasons = append(reasons, "ApiKey must not be empty")
+func (c *Config) IsValid() (bool, []string) {
+	reasons := []string{}
+
+	if c.APIKey == "" {
+		reasons = append(reasons, "APIKey must not be empty")
 	}
 
 	if c.WebSocketKeepAliveInterval < time.Second {
-		reasons = append(reasons, "WebSocketKeepAliveInterval is too short. Must be longer than one second.")
+		reasons = append(
+			reasons,
+			"WebSocketKeepAliveInterval is too short. Must be longer than one second.",
+		)
 	}
 
 	if c.WebSocketKeepAliveInterval > time.Minute*10 {
-		reasons = append(reasons, "WebSocketKeepAliveInterval is too long. Must be shorter than ten minutes.")
+		reasons = append(
+			reasons,
+			"WebSocketKeepAliveInterval is too long. Must be shorter than ten minutes.",
+		)
 	}
 
-	valid = len(reasons) == 0
+	valid := len(reasons) == 0
 	return valid, reasons
 }
 
@@ -81,7 +89,7 @@ func NewClient(ctx context.Context, config *Config, log *logrus.Logger) *Client 
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: config.InsecureSkipVerify,
+					InsecureSkipVerify: config.InsecureSkipVerify, //nolint:gosec,G402 // TODO: Figure out how to always enable TLS verification!
 				},
 			},
 		},
@@ -93,7 +101,7 @@ func NewClient(ctx context.Context, config *Config, log *logrus.Logger) *Client 
 
 func (c *Client) headers() *http.Header {
 	headers := &http.Header{}
-	headers.Add("X-API-KEY", c.config.ApiKey)
+	headers.Add("X-Api-Key", c.config.APIKey)
 	headers.Add("Accept", "application/json")
 	headers.Add("Content-Type", "application/json")
 	return headers
@@ -101,43 +109,43 @@ func (c *Client) headers() *http.Header {
 
 func (c *Client) webSocketHeaders() *http.Header {
 	headers := &http.Header{}
-	headers.Add("X-API-KEY", c.config.ApiKey)
+	headers.Add("X-Api-Key", c.config.APIKey)
 	return headers
 }
 
 type apiEndpoint struct {
-	UrlFragment    string
+	URLFragment    string
 	Method         string
 	ExpectedStatus int
 	Description    string
 	Application    string
 	Protocol       string
-	NumUrlArgs     int
+	NumURLArgs     int
 	NumQueryArgs   int
 	HasRequestBody bool
 }
 
 type requestArgs struct {
 	Endpoint     *apiEndpoint
-	UrlArguments []any
+	URLArguments []any
 	RequestBody  io.Reader
 	Query        *url.Values
 }
 
-func (c *Client) renderUrl(req *requestArgs) string {
-	renderedFragment := req.Endpoint.UrlFragment
+func (c *Client) renderURL(req *requestArgs) string {
+	renderedFragment := req.Endpoint.URLFragment
 
-	if req.Endpoint.NumUrlArgs != len(req.UrlArguments) {
+	if req.Endpoint.NumURLArgs != len(req.URLArguments) {
 		c.log.WithFields(logrus.Fields{
-			"expected_args": req.Endpoint.NumUrlArgs,
-			"actual_args":   len(req.UrlArguments),
-			"urlFragment":   req.Endpoint.UrlFragment,
+			"expected_args": req.Endpoint.NumURLArgs,
+			"actual_args":   len(req.URLArguments),
+			"URLFragment":   req.Endpoint.URLFragment,
 		}).Fatal("Number of url arguments does not match number of arguments " +
 			"required by the API endpoint")
 	}
 
-	if len(req.UrlArguments) > 0 {
-		renderedFragment = fmt.Sprintf(req.Endpoint.UrlFragment, req.UrlArguments...)
+	if len(req.URLArguments) > 0 {
+		renderedFragment = fmt.Sprintf(req.Endpoint.URLFragment, req.URLArguments...)
 	}
 
 	protocol := "https"
@@ -145,7 +153,13 @@ func (c *Client) renderUrl(req *requestArgs) string {
 		protocol = req.Endpoint.Protocol
 	}
 
-	url := fmt.Sprintf(URL_TEMPLATE, protocol, c.config.Hostname, req.Endpoint.Application, renderedFragment)
+	url := fmt.Sprintf(
+		urlTemplate,
+		protocol,
+		c.config.Hostname,
+		req.Endpoint.Application,
+		renderedFragment,
+	)
 
 	// TODO: Some sort of sanity checking on number & keys of query args...
 	if req.Query != nil {
@@ -162,15 +176,20 @@ func (c *Client) renderUrl(req *requestArgs) string {
 }
 
 func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
-	renderedUrl := c.renderUrl(req)
+	renderedURL := c.renderURL(req)
 
 	if req.Endpoint.HasRequestBody && req.RequestBody == http.NoBody {
 		c.log.WithFields(logrus.Fields{
-			"urlFragment": req.Endpoint.UrlFragment,
+			"URLFragment": req.Endpoint.URLFragment,
 		}).Fatal("Request should have a body but http.NoBody was passed")
 	}
 
-	request, err := http.NewRequestWithContext(c.ctx, req.Endpoint.Method, renderedUrl, req.RequestBody)
+	request, err := http.NewRequestWithContext(
+		c.ctx,
+		req.Endpoint.Method,
+		renderedURL,
+		req.RequestBody,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -183,12 +202,12 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 	}
 
 	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
+		closeErr := resp.Body.Close()
+		if closeErr != nil {
 			c.log.WithFields(logrus.Fields{
-				"url":    renderedUrl,
+				"url":    renderedURL,
 				"status": resp.StatusCode,
-			}).Errorf("Error closing response body: %s", err.Error())
+			}).Errorf("Error closing response body: %s", closeErr.Error())
 		}
 	}()
 
@@ -213,11 +232,15 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 			}).Error("UniFi application returned an error")
 		}
 
-		return nil, fmt.Errorf("got unexpected http code %d when requesting '%s'", resp.StatusCode, renderedUrl)
+		return nil, fmt.Errorf(
+			"got unexpected http code %d when requesting '%s'",
+			resp.StatusCode,
+			renderedURL,
+		)
 	}
 
 	c.log.WithFields(logrus.Fields{
-		"url":    renderedUrl,
+		"url":    renderedURL,
 		"status": resp.StatusCode,
 	}).Debug("URL request success")
 
@@ -254,7 +277,6 @@ func buildQuery(filter types.Filter, pageArgs *types.PageArguments) *url.Values 
 	if pageArgs != nil {
 		if pageArgs.Limit != 0 {
 			query.Add("limit", strconv.FormatUint(uint64(pageArgs.Limit), 10))
-
 		}
 		if pageArgs.Offset != 0 {
 			query.Add("offset", strconv.FormatUint(uint64(pageArgs.Offset), 10))

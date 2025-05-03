@@ -11,38 +11,38 @@ import (
 )
 
 var protectAPI = map[string]*apiEndpoint{
-	"Info": &apiEndpoint{
-		UrlFragment: "meta/info",
+	"Info": {
+		URLFragment: "meta/info",
 		Method:      http.MethodGet,
 		Description: "Get application information",
 		Application: "protect",
 	},
-	"SubscribeProtectEvents": &apiEndpoint{
-		UrlFragment: "subscribe/events",
+	"SubscribeProtectEvents": {
+		URLFragment: "subscribe/events",
 		Method:      http.MethodGet,
 		Description: "Get Protect event messages",
 		Application: "protect",
 		Protocol:    "wss",
 	},
-	"SubscribeDeviceEvents": &apiEndpoint{
-		UrlFragment: "subscribe/devices",
+	"SubscribeDeviceEvents": {
+		URLFragment: "subscribe/devices",
 		Method:      http.MethodGet,
 		Description: "Get Protect device updates",
 		Application: "protect",
 		Protocol:    "wss",
 	},
-	"Cameras": &apiEndpoint{
-		UrlFragment: "cameras",
+	"Cameras": {
+		URLFragment: "cameras",
 		Method:      http.MethodGet,
 		Description: "Get all cameras",
 		Application: "protect",
 	},
-	"CameraDetails": &apiEndpoint{
-		UrlFragment: "cameras/%s",
+	"CameraDetails": {
+		URLFragment: "cameras/%s",
 		Method:      http.MethodGet,
 		Description: "Get camera details",
 		Application: "protect",
-		NumUrlArgs:  1,
+		NumURLArgs:  1,
 	},
 }
 
@@ -84,7 +84,7 @@ func (pc *protectV1Client) Cameras() ([]*types.Camera, error) {
 func (pc *protectV1Client) CameraDetails(cameraID types.CameraID) (*types.Camera, error) {
 	body, err := pc.client.doRequest(&requestArgs{
 		Endpoint:     protectAPI["CameraDetails"],
-		UrlArguments: []any{cameraID},
+		URLArguments: []any{cameraID},
 	})
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (pc *protectV1Client) CameraDetails(cameraID types.CameraID) (*types.Camera
 }
 
 func (pc *protectV1Client) SubscribeProtectEvents() (<-chan *types.ProtectEvent, error) {
-	url := pc.client.renderUrl(&requestArgs{
+	url := pc.client.renderURL(&requestArgs{
 		Endpoint: protectAPI["SubscribeProtectEvents"],
 	})
 	conn, _, err := websocket.Dial(pc.client.ctx,
@@ -133,11 +133,11 @@ func (pc *protectV1Client) SubscribeProtectEvents() (<-chan *types.ProtectEvent,
 			default:
 			}
 
-			messageType, data, err := conn.Read(pc.client.ctx)
-			if err != nil {
+			messageType, data, readErr := conn.Read(pc.client.ctx)
+			if readErr != nil {
 				pc.client.log.WithFields(logrus.Fields{
 					"url":   url,
-					"error": err.Error(),
+					"error": readErr.Error(),
 				}).Error("WebSocket Read returned error")
 				close(eventChan)
 				return
@@ -170,7 +170,7 @@ func (pc *protectV1Client) SubscribeProtectEvents() (<-chan *types.ProtectEvent,
 }
 
 func (pc *protectV1Client) SubscribeDeviceEvents() (<-chan *types.ProtectDeviceEvent, error) {
-	url := pc.client.renderUrl(&requestArgs{
+	url := pc.client.renderURL(&requestArgs{
 		Endpoint: protectAPI["SubscribeDeviceEvents"],
 	})
 	conn, _, err := websocket.Dial(pc.client.ctx,
@@ -202,11 +202,11 @@ func (pc *protectV1Client) SubscribeDeviceEvents() (<-chan *types.ProtectDeviceE
 			default:
 			}
 
-			messageType, data, err := conn.Read(pc.client.ctx)
-			if err != nil {
+			messageType, data, readErr := conn.Read(pc.client.ctx)
+			if readErr != nil {
 				pc.client.log.WithFields(logrus.Fields{
 					"url":   url,
-					"error": err.Error(),
+					"error": readErr.Error(),
 				}).Error("json.Unmarshal returned error")
 				close(eventChan)
 				return
@@ -221,8 +221,8 @@ func (pc *protectV1Client) SubscribeDeviceEvents() (<-chan *types.ProtectDeviceE
 			}
 
 			var protectDeviceUpdate *types.ProtectDeviceEvent
-			err = json.Unmarshal(data, &protectDeviceUpdate)
-			if err != nil {
+			unmarshalErr := json.Unmarshal(data, &protectDeviceUpdate)
+			if unmarshalErr != nil {
 				pc.client.log.WithFields(logrus.Fields{
 					"url":   url,
 					"error": err.Error(),

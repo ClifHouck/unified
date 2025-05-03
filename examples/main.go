@@ -1,20 +1,21 @@
 package main
 
-import "sync"
-import "strings"
-import "time"
-import "os"
-import "context"
+import (
+	"context"
+	"os"
+	"strings"
+	"sync"
+	"time"
 
-import "github.com/ClifHouck/unified/client"
-import "github.com/ClifHouck/unified/types"
+	"github.com/gopxl/beep"
+	"github.com/gopxl/beep/effects"
+	"github.com/gopxl/beep/mp3"
+	"github.com/gopxl/beep/speaker"
+	"github.com/sirupsen/logrus"
 
-import "github.com/gopxl/beep"
-import "github.com/gopxl/beep/effects"
-import "github.com/gopxl/beep/mp3"
-import "github.com/gopxl/beep/speaker"
-
-import "github.com/sirupsen/logrus"
+	"github.com/ClifHouck/unified/client"
+	"github.com/ClifHouck/unified/types"
+)
 
 var log *logrus.Logger
 
@@ -75,7 +76,7 @@ func main() {
 	streamHandler := client.NewProtectEventStreamHandler(ctx, eventChan)
 
 	var handlerMutex sync.Mutex
-	streamHandler.SetRingEventHandler(func(eventType string, event *types.RingEvent) {
+	streamHandler.SetRingEventHandler(func(eventType string, _ *types.RingEvent) {
 		handlerMutex.Lock()
 		defer handlerMutex.Unlock()
 		if eventType == "add" {
