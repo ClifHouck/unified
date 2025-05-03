@@ -161,7 +161,7 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 		err = json.Unmarshal(output, &vouchers)
 		require.NoError(t, err)
 
-		assert.Len(t, numVouchers, len(vouchers))
+		assert.Len(t, vouchers, numVouchers)
 
 		setup = true
 	})
@@ -183,7 +183,7 @@ func TestVoucherCmdsNetwork(t *testing.T) {
 				var vouchers []*types.Voucher
 				err := json.Unmarshal(output, &vouchers)
 				require.NoError(t, err)
-				assert.Len(t, numVouchers, len(vouchers))
+				assert.Len(t, vouchers, numVouchers)
 				assert.Equal(t, voucherName, vouchers[0].Name)
 			},
 		},
