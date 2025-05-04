@@ -155,27 +155,42 @@ func BuildCmd() error {
 	return nil
 }
 
+var examples []string = []string{
+	"doorbell",
+}
+
 // Builds example programs found in './examples'.
 func BuildExamples() error {
 	mg.Deps(Build)
 
-	err := os.Chdir("examples/doorbell")
+	err := os.Chdir("examples/")
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err = os.Chdir("../..")
+		err = os.Chdir("..")
 		if err != nil {
 			log.Error(err.Error())
 		}
 	}()
 
-	err = sh.Run("go", "build", "-o", "../bin/doorbell",
-		"./doorbell.go")
-	if err != nil {
-		return err
+	for _, example := range examples {
+		err := os.Chdir(example)
+		if err != nil {
+			return err
+		}
+		err = sh.Run("go", "build", "-o", "../bin/"+example,
+			"./"+example+".go")
+		if err != nil {
+			return err
+		}
+		log.Infof("Built example '%s'.", example)
+
+		err = os.Chdir("..")
+		if err != nil {
+			return err
+		}
 	}
-	log.Info("Built examples.")
 
 	return nil
 }
@@ -224,10 +239,28 @@ func Clean() error {
 
 // Run the linter
 func Lint() error {
+	log.Info("Linting unified go files.")
 	err := sh.RunV("golangci-lint", "run")
 	if err != nil {
 		return err
 	}
-	log.Info("Ran linter.")
+
+	for _, example := range examples {
+		log.Infof("Linting example '%s'", example)
+		err = os.Chdir("./examples/" + example)
+		if err != nil {
+			return err
+		}
+
+		err = sh.RunV("golangci-lint", "run")
+		if err != nil {
+			return err
+		}
+
+		err = os.Chdir("../..")
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
