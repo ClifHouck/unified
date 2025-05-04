@@ -8,6 +8,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 )
 
+replace github.com/ClifHouck/unified => ../../
+
 require (
 	github.com/coder/websocket v1.8.13 // indirect
 	github.com/ebitengine/oto/v3 v3.1.0 // indirect
