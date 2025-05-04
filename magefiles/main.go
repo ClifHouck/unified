@@ -158,12 +158,25 @@ func BuildCmd() error {
 // Builds example programs found in './examples'.
 func BuildExamples() error {
 	mg.Deps(Build)
-	err := sh.Run("go", "build", "-o", "examples/bin/doorbell",
-		"./examples/main.go")
+
+	err := os.Chdir("examples/doorbell")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = os.Chdir("../..")
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}()
+
+	err = sh.Run("go", "build", "-o", "../bin/doorbell",
+		"./doorbell.go")
 	if err != nil {
 		return err
 	}
 	log.Info("Built examples.")
+
 	return nil
 }
 
