@@ -119,7 +119,6 @@ type apiEndpoint struct {
 	ExpectedStatus int
 	Description    string
 	Application    string
-	Protocol       string
 	NumURLArgs     int
 	NumQueryArgs   int
 	HasRequestBody bool
@@ -148,14 +147,9 @@ func (c *Client) renderURL(req *requestArgs) string {
 		renderedFragment = fmt.Sprintf(req.Endpoint.URLFragment, req.URLArguments...)
 	}
 
-	protocol := "https"
-	if req.Endpoint.Protocol != "" {
-		protocol = req.Endpoint.Protocol
-	}
-
 	url := fmt.Sprintf(
 		urlTemplate,
-		protocol,
+		"https",
 		c.config.Hostname,
 		req.Endpoint.Application,
 		renderedFragment,

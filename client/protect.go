@@ -22,14 +22,12 @@ var protectAPI = map[string]*apiEndpoint{
 		Method:      http.MethodGet,
 		Description: "Get Protect event messages",
 		Application: "protect",
-		Protocol:    "wss",
 	},
 	"SubscribeDeviceEvents": {
 		URLFragment: "subscribe/devices",
 		Method:      http.MethodGet,
 		Description: "Get Protect device updates",
 		Application: "protect",
-		Protocol:    "wss",
 	},
 	"Cameras": {
 		URLFragment: "cameras",
