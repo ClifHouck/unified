@@ -12,6 +12,7 @@ import (
 	"github.com/gopxl/beep/mp3"
 	"github.com/gopxl/beep/speaker"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"github.com/ClifHouck/unified/client"
 	"github.com/ClifHouck/unified/types"
@@ -19,10 +20,30 @@ import (
 
 var log *logrus.Logger
 
+var mp3Filename string
+var apiKeyFilename string
+
+var rootCmd = &cobra.Command{
+	Use:   "doorbell",
+	Short: "Watch for ring events and play an MP3 when they occur",
+	Run: func(cmd *cobra.Command, args []string) {
+		Doorbell()
+	},
+}
+
+func init() {
+	rootCmd.Flags().StringVar(&mp3Filename, "mp3", "", "Filename of MP3 to load for doorbell sound")
+	rootCmd.Flags().StringVar(&apiKeyFilename, "api-key", "", "File containing UniFi API key")
+}
+
 func main() {
+	rootCmd.Execute()
+}
+
+func Doorbell() {
 	log = logrus.New()
 
-	data, err := os.ReadFile("unifi_api.key")
+	data, err := os.ReadFile(apiKeyFilename)
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -34,11 +55,11 @@ func main() {
 
 	valid, reasons := config.IsValid()
 	if !valid {
-		log.Error("Unifi client configuration is invalid, aborting:")
+		log.Error("Please fix the following unified client configuration problems:")
 		for _, reason := range reasons {
 			log.Error(reason)
 		}
-		return
+		log.Fatal("Unifi client configuration is invalid, aborting.")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -65,22 +86,26 @@ func main() {
 	}
 	defer cancel()
 
-	stream, format, err := LoadMP3("./Ding-dong-sound-effect.mp3")
+	stream, format, err := LoadMP3(mp3Filename)
 	if err != nil {
 		log.WithFields(logrus.Fields{
-			"error": err.Error(),
-		}).Error("LoadMP3 encountered error")
-		return
+			"error":    err.Error(),
+			"filename": mp3Filename,
+		}).Fatal("LoadMP3 encountered error")
 	}
+	log.WithFields(logrus.Fields{
+		"filename": mp3Filename,
+	}).Info("Load MP3 success")
 
 	streamHandler := client.NewProtectEventStreamHandler(ctx, eventChan)
 
+	// Sync this because the event handler will be called asynchronously.
 	var handlerMutex sync.Mutex
 	streamHandler.SetRingEventHandler(func(eventType string, _ *types.RingEvent) {
 		handlerMutex.Lock()
 		defer handlerMutex.Unlock()
 		if eventType == "add" {
-			PlayDingDong(stream, format)
+			PlayMP3(stream, format) // This is where the magic happens!
 		}
 	})
 
@@ -98,22 +123,22 @@ func LoadMP3(filename string) (beep.StreamSeekCloser, *beep.Format, error) {
 
 	streamer, format, err := mp3.Decode(f)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, err
 	}
 
 	return streamer, &format, nil
 }
 
-func PlayDingDong(streamer beep.StreamSeekCloser, format *beep.Format) {
+func PlayMP3(streamer beep.StreamSeekCloser, format *beep.Format) {
 	err := speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
 	if err != nil {
-		log.Errorf("PlayDingDong: speaker.Init failed with error: %s", err.Error())
+		log.Errorf("PlayMP3: speaker.Init failed with error: %s", err.Error())
 		return
 	}
 
 	err = streamer.Seek(0)
 	if err != nil {
-		log.Errorf("PlayDingDong: streamer.Seek failed with error: %s", err.Error())
+		log.Errorf("PlayMP3: streamer.Seek failed with error: %s", err.Error())
 		return
 	}
 
@@ -130,5 +155,5 @@ func PlayDingDong(streamer beep.StreamSeekCloser, format *beep.Format) {
 		done <- true
 	})))
 	<-done
-	log.Info("Ding dong done playing.")
+	log.Info("MP3 done playing.")
 }
