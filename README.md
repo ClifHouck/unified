@@ -154,7 +154,7 @@ verification generally fails when `https` protocol connections are attemped.
 `unified` defaults to TLS verification being off.
 
 In short, at least two general issues need to be solved to enable TLS verification
-in general:
+by default:
 
 1. UniFi certificates should be signed by a trusted authority. Or Ubiquiti needs
    to provide an easy way to import their authority chain.
