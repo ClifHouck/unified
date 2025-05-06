@@ -4,13 +4,13 @@
 
 An Unofficial UniFi Network & Protect API Client & CLI command, written in Golang.
 
-## Features
+# Features
 
 * Command line utility `unified`: makes it easy to send requests to UniFi APIs
     and get their responses.
 * Fully-featured Golang client for type-safe, programmatic access to UniFi APIs.
 
-## Quickstart
+# Quickstart
 
 Install `unified` from `go`:
 ```bash
@@ -37,7 +37,7 @@ If all goes well, you should see something like:
 Note that the output is valid JSON, just like the UniFi applications produce.
 
 
-## `unified` Command Line Usage
+# `unified` Command Line Usage
 
 `unified` has a full help system accessible through the `--help` flag.
 
@@ -52,7 +52,7 @@ and for Protect APIs
 $ unified protect
 ```
 
-## Golang Client Usage
+# Golang Client Usage
 
 To instantiate a client you should call `client.NewClient`:
 
@@ -77,10 +77,10 @@ and [ProtectV1](https://github.com/ClifHouck/unified/blob/main/types/protect.go)
 These interfaces strive to closely mirror the actual APIs exposed by the
 Network and Protect applications.
 
-## Protect Websocket Event Streams
+# Protect Websocket Event Streams
 
 Protect's API has a couple of interesting endpoints which allow a client to subscribe
-to a Websocket event stream. The `ProtectV1` interface exposes a pair of 
+to a Websocket event stream. The `ProtectV1` interface exposes a pair of
 methods which provide easy access to those streams as golang channels:
 
 ```golang
@@ -118,9 +118,15 @@ these event's even easier. Here's a brief example of using `ProtectEventStreamHa
 
 A nearly-identical struct exists to handle `ProtectDeviceEvent`s: `ProtectDeviceEventStreamHandler`.
 
-## UniFi API Key Instructions
+[doorbell.go](https://github.com/ClifHouck/unified/blob/main/examples/doorbell/doorbell.go) is a full
+example of using a stream handler. Example programs can be built via:
+```bash
+$ mage buildExamples
+```
+
+# UniFi API Key Instructions
 Learn how to generate an API key from [UniFi's offcial documentation](https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API).
-Network and Protect are "Local Applications". 
+Network and Protect are "Local Applications".
 
 >[!WARNING]
 >Your API key is a sensitive secret! Please keep it securely stored.
@@ -130,11 +136,7 @@ Network and Protect are "Local Applications".
 
 You can always generate a new API key if necessary.
 
-## TLS Issue
-
-TODO
-
-## Project Roadmap
+# Project Roadmap
 
 Full Protect API support is planned in short order. After the initial versioned
 release of this project, work will proceed towards full Protect V1 API support.
@@ -144,7 +146,23 @@ Reference documentation through godoc is also a priority before a v1.0.0 release
 
 Access API might be supported in a future release. Contributions welcome here.
 
-### API Support Status
+## TLS Issue
+
+Unifi's provided TLS certificates are self-signed and do not sign for the `unifi`
+hostname. They *DO* sign for `unifi.local`, but the default DNS configuration
+for my UDM Pro does not seem to add an entry for `unifi.local`. Therefore TLS
+verification generally fails when `https` protocol connections are attemped.
+`unified` defaults to TLS verification being off.
+
+In short, at least two general issues need to be solved to enable TLS verification
+in general:
+
+1. UniFi certificates should be signed by a trusted authority. Or Ubiquiti needs
+   to provide an easy way to import their authority chain.
+2. UniFi certificates should at least be signed for `unifi` *or* provide a
+   `unifi.local` DNS entry by default.
+
+## API Support Status
 
 UniFi Network API V1 is fully supported as of Network application version "9.1.120".
 
@@ -158,7 +176,7 @@ UniFi Protect API is only partially supported, with the following endpoints supp
 
 UniFi Access API is not supported yet.
 
-## Contributing
+# Contributing
 
 Contributions are welcome!
 
@@ -174,7 +192,7 @@ If you find a bug, please report it via GitHub issues. The more descriptive you
 can be, the better. Please include specific steps to reproduce. Bonus points for
 submitting a PR to fix it!
 
-### Building `unified`
+## Building `unified`
 
 Unified is built primarily via [`mage`](https://magefile.org/).
 
@@ -189,7 +207,7 @@ $ mage buildCmd
 Which will build `unified` as well as any of its dependencies. If successful,
 it should place the binary at `build/unified`.
 
-### Testing
+## Testing
 
 ```bash
 $ mage test
@@ -208,12 +226,12 @@ UNIFIED_HAVE_UNIFI_API_HOST=true go test -v ./test/integration/
 >against your API host. We are *NOT* resposible for any harm they might
 >cause to your network device/control-plane.
 
-### Linting
+## Linting
 
 ```bash
 $ mage lint
 ```
 
-## Thanks
+# Thanks
 
 Copyright 2025 - Clifton Houck
