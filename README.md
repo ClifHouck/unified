@@ -17,7 +17,7 @@ Install `unified` from `go`:
 $ go install ClifHouck/unified@latest
 ```
 
-Set your UniFi [API key](#UniFi-API-Key-Instructions)
+Set your UniFi [API key](#unifi-api-key-instructions)
 ```bash
 export UNIFI_API_KEY=$(cat unifi_api.key)
 ```
