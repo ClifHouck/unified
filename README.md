@@ -6,11 +6,16 @@ An Unofficial UniFi Network & Protect API Client & CLI command, written in Golan
 
 # Features
 
-* Command line utility `unified`: makes it easy to send requests to UniFi APIs
+* Command line utility `unified` makes it easy to send requests to UniFi APIs
     and get their responses.
 * Fully-featured Golang client for type-safe, programmatic access to UniFi APIs.
 
 # Quickstart
+>[!WARNING]
+>The CLI will make changes to the persistent configuration of your device(s). 
+>It is recommended that you [backup](https://help.ui.com/hc/en-us/articles/360008976393-Backups-and-Migration-in-UniFi) your configuration(s) prior to making changes.
+
+## Installation
 
 Install `unified` from `go`:
 ```bash
