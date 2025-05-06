@@ -229,8 +229,8 @@ to `https://unifi` and verify results.
 >While designed to be non-destructive to existing application objects and
 >configuration, some non-`GET` endpoints are called. Please take a look at
 >existing integration tests and verify you're comfortable running them
->against your API host. We are *NOT* resposible for any harm they might
->cause to your network device/control-plane.
+>against your API host. We are ***not*** responsible for any harm they might
+>cause to your network device/control-plane. There are facilities to [backup](https://help.ui.com/hc/en-us/articles/360008976393-Backups-and-Migration-in-UniFi) your configuration and we ***heavily*** suggest you do so before working with the CLI.
 
 ## Linting
 
