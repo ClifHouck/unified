@@ -6,7 +6,7 @@ An Unofficial UniFi Network & Protect API Client & CLI command, written in Golan
 
 ## Features
 
-* Command line utility `unified`: makes it easy to send requests to UniFi APIs 
+* Command line utility `unified`: makes it easy to send requests to UniFi APIs
     and get their responses.
 * Fully-featured Golang client for type-safe, programmatic access to UniFi APIs.
 
@@ -29,7 +29,6 @@ $ unified network info
 
 If all goes well, you should see something like:
 ```json
-$ unified network info
 {
   "applicationVersion": "9.1.120"
 }
@@ -59,7 +58,7 @@ $ unified protect
 Learn how to generate an API key from [UniFi's offcial documentation](https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API).
 
 >[!WARNING]
->Your API key is a sensitive secret! Please keep it securely stored. 
+>Your API key is a sensitive secret! Please keep it securely stored.
 >It gives *FULL* API access to your UniFi applications. If you need to revoke
 >an API key navigate to your UniFi application and go to your Admin user:
 >Settings -> Admins & User -> Select Admin account associated with the API key -> Click on API Key -> Remove
@@ -68,13 +67,34 @@ You can always generate a new API key if necessary.
 
 ## Golang Client Usage
 
-TODO
+To instantiate a client you should call `client.NewClient`:
+
+```golang
+    // ctx is a context.Context.
+    // NewDefaultConfig returns a client.Config struct, apiKey is a string populated with your UniFi API key.
+    // log is a *logrus.Logger.
+    unifiClient := client.NewClient(ctx, client.NewDefaultConfig(apiKey), log)
+```
+
+Access to actual API client calls is mediated through [NetworkV1](https://github.com/ClifHouck/unified/blob/main/types/network.go)
+and [ProtectV1](https://github.com/ClifHouck/unified/blob/main/types/protect.go) interfaces. Like so:
+
+```golang
+    networkInfo, err := unifiClient.Network.Info()
+    if err != nil {
+        return err
+    }
+    fmt.Println(networkInfo.ApplicationVersion) // Prints '9.1.20' or similar.
+```
+
+These interfaces strive to closely mirror the actual APIs exposed by the
+Network and Protect applications.
 
 ## Protect Websocket Event Streams
 
 Protect's API has a couple of interesting endpoints which allow a client to subscribe
-to a Websocket event stream. The `ProtectV1 interface` provides a
-pair of functions that provide easy access to those streams as golang channels:
+to a Websocket event stream. The `ProtectV1` provides a pair of functions which
+provide easy access to those streams as golang channels:
 
 ```golang
     // Websocket updates
@@ -93,20 +113,24 @@ these event's even easier. Here's a brief example of using `ProtectEventStreamHa
         return err
     }
 
-    // streamHandler immediately launches a goroutine which calls registered
-    // event handlers.
     streamHandler := client.NewProtectEventStreamHandler(ctx, eventChan)
 
-    // Type-safe access to the Protect RingEvent via callback.
+    // Register handler callback function for type-safe access to the Protect
+    // RingEvent.
     streamHandler.SetRingEventHandler(func(eventType string, _ *types.RingEvent) {
         if eventType == "add" {
             fmt.Println("Got add ring event!")
         }
         ...
     })
+
+    // Start processing events from the stream channel.
+    go streamHandler.Process()
+
+    <-ctx.Done()
 ```
 
-an nearly-identical type exists to handle `ProtectDeviceEvent`s: `ProtectDeviceEventStreamHandler`.
+A nearly-identical type exists to handle `ProtectDeviceEvent`s: `ProtectDeviceEventStreamHandler`.
 
 ## Project Roadmap
 
@@ -137,12 +161,12 @@ UniFi Access API is not supported yet.
 Contributions are welcome!
 
 Before submiting any PRs, please ensure your commits build and lint. Also, take
-care to test any changes, and ideally submit unit tests or integration tests 
-which cover your changes. PRs must pass all CI 
+care to test any changes, and ideally submit unit tests or integration tests
+which cover your changes. PRs must pass all CI
 
-If you'd like to contribute a feature or API support that doesn't yet exist, 
+If you'd like to contribute a feature or API support that doesn't yet exist,
 please communicate your intention through a new or existing GitHub issue. Let's
-try to avoid duplicating work, and make sure the work aligns with project goals. 
+try to avoid duplicating work, and make sure the work aligns with project goals.
 
 If you find a bug, please report it via GitHub issues. The more descriptive you
 can be, the better. Please include specific steps to reproduce. Bonus points for
@@ -163,12 +187,12 @@ $ mage buildCmd
 Which will build `unified` as well as any of its dependencies. If successful,
 it should place the binary at `build/unified`.
 
-### Testing 
+### Testing
 
 ```bash
 $ mage test
-``` 
-Will run any unit tests available. Which are not many at this point. Any 
+```
+Will run any unit tests available. Which are not many at this point. Any
 reasonable unit test contributions are welcome.
 
 If you have a UniFi API host available, you can run integration tests:
@@ -176,10 +200,10 @@ If you have a UniFi API host available, you can run integration tests:
 UNIFIED_HAVE_UNIFI_API_HOST=true go test -v ./test/integration/
 ```
 >[!WARNING]
->While designed to be non-destructive to existing application objects and 
->configuration, some non-`GET` endpoints are called. Please take a look at 
->existing integration tests and verify you're comfortable running them 
->against your API host. We are *NOT* resposible for any harm they might 
+>While designed to be non-destructive to existing application objects and
+>configuration, some non-`GET` endpoints are called. Please take a look at
+>existing integration tests and verify you're comfortable running them
+>against your API host. We are *NOT* resposible for any harm they might
 >cause to your network device/control-plane.
 
 ### Linting
