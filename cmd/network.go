@@ -165,17 +165,24 @@ and prints the results to stdout.`,
 			}
 		} else {
 			if !hidePage {
-				err = MarshalAndPrintJSON(page)
+				results := struct {
+					types.Page
+					Data []*types.DeviceListEntry `json:"data"`
+				}{
+					Page: *page,
+					Data: devices,
+				}
+				err = MarshalAndPrintJSON(results)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
-			}
-
-			err = MarshalAndPrintJSON(devices)
-			if err != nil {
-				log.Error(err.Error())
-				return
+			} else {
+				err = MarshalAndPrintJSON(devices)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
 			}
 		}
 	},
@@ -295,17 +302,25 @@ while if option is disabled it will return just the default site.`,
 			}
 		} else {
 			if !hidePage {
-				err = MarshalAndPrintJSON(page)
+				results := struct {
+					types.Page
+					Data []*types.Site `json:"data"`
+				}{
+					Page: *page,
+					Data: sites,
+				}
+				err = MarshalAndPrintJSON(results)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
-			}
+			} else {
 
-			err = MarshalAndPrintJSON(sites)
-			if err != nil {
-				log.Error(err.Error())
-				return
+				err = MarshalAndPrintJSON(sites)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
 			}
 		}
 	},
@@ -334,17 +349,25 @@ or active VPN connections.`,
 			}
 		} else {
 			if !hidePage {
-				err = MarshalAndPrintJSON(page)
+				results := struct {
+					types.Page
+					Data []*types.Client `json:"data"`
+				}{
+					Page: *page,
+					Data: clients,
+				}
+				err = MarshalAndPrintJSON(results)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
-			}
+			} else {
 
-			err = MarshalAndPrintJSON(clients)
-			if err != nil {
-				log.Error(err.Error())
-				return
+				err = MarshalAndPrintJSON(clients)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
 			}
 		}
 	},
@@ -408,17 +431,24 @@ var listVouchersCmd = &cobra.Command{
 			}
 		} else {
 			if !hidePage {
-				err = MarshalAndPrintJSON(page)
+				results := struct {
+					types.Page
+					Data []*types.Voucher `json:"data"`
+				}{
+					Page: *page,
+					Data: vouchers,
+				}
+				err = MarshalAndPrintJSON(results)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
-			}
-
-			err = MarshalAndPrintJSON(vouchers)
-			if err != nil {
-				log.Error(err.Error())
-				return
+			} else {
+				err = MarshalAndPrintJSON(vouchers)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
 			}
 		}
 	},
