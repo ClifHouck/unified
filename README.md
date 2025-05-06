@@ -65,7 +65,7 @@ $ unified protect
 
 # Golang Client Usage
 
-To instantiate a client you should call `client.NewClient`:
+To instantiate a client you should call [`client.NewClient`](https://github.com/ClifHouck/unified/blob/main/client/client.go):
 
 ```golang
     // ctx is a context.Context.
@@ -129,8 +129,8 @@ these events even easier. Here's a brief example of using `ProtectEventStreamHan
 
 A nearly-identical struct exists to handle `ProtectDeviceEvent`s: `ProtectDeviceEventStreamHandler`.
 
-[doorbell.go](https://github.com/ClifHouck/unified/blob/main/examples/doorbell/doorbell.go) is a full
-example of using a stream handler. Example programs can be built via:
+[doorbell.go](https://github.com/ClifHouck/unified/blob/main/examples/doorbell/doorbell.go)
+is a full example of using a stream handler. Example programs can be built via:
 ```bash
 $ mage buildExamples
 ```
@@ -184,7 +184,7 @@ Contributions are welcome!
 
 Before submiting any PRs, please ensure your commits build and lint. Also, take
 care to test any changes, and ideally submit unit tests or integration tests
-which cover your changes. PRs must pass all CI in order to be considered 
+which cover your changes. PRs must pass all CI in order to be considered
 acceptable to merge.
 
 If you'd like to contribute a feature or API support that doesn't yet exist,
@@ -219,7 +219,7 @@ reasonable unit test contributions are welcome.
 
 If you have a UniFi API host available, you can run integration tests:
 ```bash
-UNIFIED_HAVE_UNIFI_API_HOST=true go test -v ./test/integration/
+UNIFIED_HAVE_UNIFI_API_HOST=true go test -v ./test/integration/...
 ```
 
 This will run an integration test that uses `./build/unified` to send requests
@@ -230,7 +230,10 @@ to `https://unifi` and verify results.
 >configuration, some non-`GET` endpoints are called. Please take a look at
 >existing integration tests and verify you're comfortable running them
 >against your API host. We are ***not*** responsible for any harm they might
->cause to your network device/control-plane. There are facilities to [backup](https://help.ui.com/hc/en-us/articles/360008976393-Backups-and-Migration-in-UniFi) your configuration and we ***heavily*** suggest you do so before working with the CLI.
+>cause to your network device/control-plane. There are facilities
+>to [backup](https://help.ui.com/hc/en-us/articles/360008976393-Backups-and-Migration-in-UniFi)
+>your configuration and we ***strongly*** suggest you do so before running these
+>tests.
 
 ## Linting
 
