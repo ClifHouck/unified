@@ -77,9 +77,9 @@ to a Websocket event stream. The `ProtectV1 interface` provides a
 pair of functions that provide easy access to those streams as golang channels:
 
 ```golang
-	// Websocket updates
-	SubscribeDeviceEvents() (<-chan *ProtectDeviceEvent, error)
-	SubscribeProtectEvents() (<-chan *ProtectEvent, error)
+    // Websocket updates
+    SubscribeDeviceEvents() (<-chan *ProtectDeviceEvent, error)
+    SubscribeProtectEvents() (<-chan *ProtectEvent, error)
 ```
 
 and while it's certainly do-able to consume those event channels, unified also
@@ -88,22 +88,22 @@ these event's even easier. Here's a brief example of using `ProtectEventStreamHa
 
 ```golang
     // unifiClient is of type unified/client.Client
-	eventChan, err := unifiClient.Protect.SubscribeProtectEvents()
-	if err != nil {
-		return err
-	}
+    eventChan, err := unifiClient.Protect.SubscribeProtectEvents()
+    if err != nil {
+        return err
+    }
 
     // streamHandler immediately launches a goroutine which calls registered
     // event handlers.
-	streamHandler := client.NewProtectEventStreamHandler(ctx, eventChan)
+    streamHandler := client.NewProtectEventStreamHandler(ctx, eventChan)
 
     // Type-safe access to the Protect RingEvent via callback.
-	streamHandler.SetRingEventHandler(func(eventType string, _ *types.RingEvent) {
-		if eventType == "add" {
+    streamHandler.SetRingEventHandler(func(eventType string, _ *types.RingEvent) {
+        if eventType == "add" {
             fmt.Println("Got add ring event!")
-		}
+        }
         ...
-	})
+    })
 ```
 
 an nearly-identical type exists to handle `ProtectDeviceEvent`s: `ProtectDeviceEventStreamHandler`.
@@ -177,7 +177,7 @@ UNIFIED_HAVE_UNIFI_API_HOST=true go test -v ./test/integration/
 ```
 >[!WARNING]
 >While designed to be non-destructive to existing application objects and 
->configuration, some non-GET endpoints are called. Please take a look at 
+>configuration, some non-`GET` endpoints are called. Please take a look at 
 >existing integration tests and verify you're comfortable running them 
 >against your API host. We are *NOT* resposible for any harm they might 
 >cause to your network device/control-plane.
