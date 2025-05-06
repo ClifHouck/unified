@@ -17,7 +17,7 @@ Install `unified` from `go`:
 $ go install ClifHouck/unified@latest
 ```
 
-Set your UniFi [API key](#API-Key) :
+Set your UniFi [API key](#UniFi-API-Key-Instructions)
 ```bash
 export UNIFI_API_KEY=$(cat unifi_api.key)
 ```
@@ -39,8 +39,6 @@ Note that the output is valid JSON, just like the UniFi applications produce.
 
 ## `unified` Command Line Usage
 
-`unified`
-
 `unified` has a full help system accessible through the `--help` flag.
 
 To access Network APIs you will use:
@@ -53,17 +51,6 @@ and for Protect APIs
 ```bash
 $ unified protect
 ```
-
-## UniFi API Key Instructions {#API-Key}
-Learn how to generate an API key from [UniFi's offcial documentation](https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API).
-
->[!WARNING]
->Your API key is a sensitive secret! Please keep it securely stored.
->It gives *FULL* API access to your UniFi applications. If you need to revoke
->an API key navigate to your UniFi application and go to your Admin user:
->Settings -> Admins & User -> Select Admin account associated with the API key -> Click on API Key -> Remove
-
-You can always generate a new API key if necessary.
 
 ## Golang Client Usage
 
@@ -93,8 +80,8 @@ Network and Protect applications.
 ## Protect Websocket Event Streams
 
 Protect's API has a couple of interesting endpoints which allow a client to subscribe
-to a Websocket event stream. The `ProtectV1` provides a pair of functions which
-provide easy access to those streams as golang channels:
+to a Websocket event stream. The `ProtectV1` interface exposes a pair of 
+methods which provide easy access to those streams as golang channels:
 
 ```golang
     // Websocket updates
@@ -107,7 +94,6 @@ provides a handler for each event type that makes consuming and re-acting to
 these event's even easier. Here's a brief example of using `ProtectEventStreamHandler`:
 
 ```golang
-    // unifiClient is of type unified/client.Client
     eventChan, err := unifiClient.Protect.SubscribeProtectEvents()
     if err != nil {
         return err
@@ -130,7 +116,23 @@ these event's even easier. Here's a brief example of using `ProtectEventStreamHa
     <-ctx.Done()
 ```
 
-A nearly-identical type exists to handle `ProtectDeviceEvent`s: `ProtectDeviceEventStreamHandler`.
+A nearly-identical struct exists to handle `ProtectDeviceEvent`s: `ProtectDeviceEventStreamHandler`.
+
+## UniFi API Key Instructions
+Learn how to generate an API key from [UniFi's offcial documentation](https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API).
+Network and Protect are "Local Applications". 
+
+>[!WARNING]
+>Your API key is a sensitive secret! Please keep it securely stored.
+>It gives *FULL* API access to your UniFi applications. If you need to revoke
+>an API key navigate to your UniFi application and go to your Admin user:
+>Settings -> Admins & User -> Select Admin account associated with the API key -> Click on API Key -> Remove.
+
+You can always generate a new API key if necessary.
+
+## TLS Issue
+
+TODO
 
 ## Project Roadmap
 
