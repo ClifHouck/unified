@@ -36,6 +36,17 @@ If all goes well, you should see something like:
 
 Note that the output is valid JSON, just like the UniFi applications produce.
 
+## UniFi API Key Instructions
+Learn how to generate an API key from [UniFi's offcial documentation](https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API).
+Network and Protect are "Local Applications".
+
+>[!WARNING]
+>Your API key is a sensitive secret! Please keep it securely stored.
+>It gives *FULL* API access to your UniFi applications. If you need to revoke
+>an API key navigate to your UniFi application and go to your Admin user:
+>Settings -> Admins & User -> Select Admin account associated with the API key -> Click on API Key -> Remove.
+
+You can always generate a new API key if necessary.
 
 # `unified` Command Line Usage
 
@@ -91,7 +102,7 @@ methods which provide easy access to those streams as golang channels:
 
 and while it's certainly do-able to consume those event channels, unified also
 provides a handler for each event type that makes consuming and re-acting to
-these event's even easier. Here's a brief example of using `ProtectEventStreamHandler`:
+these events even easier. Here's a brief example of using `ProtectEventStreamHandler`:
 
 ```golang
     eventChan, err := unifiClient.Protect.SubscribeProtectEvents()
@@ -124,18 +135,6 @@ example of using a stream handler. Example programs can be built via:
 $ mage buildExamples
 ```
 
-# UniFi API Key Instructions
-Learn how to generate an API key from [UniFi's offcial documentation](https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API).
-Network and Protect are "Local Applications".
-
->[!WARNING]
->Your API key is a sensitive secret! Please keep it securely stored.
->It gives *FULL* API access to your UniFi applications. If you need to revoke
->an API key navigate to your UniFi application and go to your Admin user:
->Settings -> Admins & User -> Select Admin account associated with the API key -> Click on API Key -> Remove.
-
-You can always generate a new API key if necessary.
-
 # Project Roadmap
 
 Full Protect API support is planned in short order. After the initial versioned
@@ -146,7 +145,7 @@ Reference documentation through godoc is also a priority before a v1.0.0 release
 
 Access API might be supported in a future release. Contributions welcome here.
 
-## TLS Issue
+## TLS Verification Issue
 
 Unifi's provided TLS certificates are self-signed and do not sign for the `unifi`
 hostname. They *DO* sign for `unifi.local`, but the default DNS configuration
@@ -161,6 +160,9 @@ in general:
    to provide an easy way to import their authority chain.
 2. UniFi certificates should at least be signed for `unifi` *or* provide a
    `unifi.local` DNS entry by default.
+
+I'd like to find an easy way to solve these two issues and re-enable TLS
+verification by default before a full v1.0.0 release.
 
 ## API Support Status
 
@@ -194,9 +196,8 @@ submitting a PR to fix it!
 
 ## Building `unified`
 
-Unified is built primarily via [`mage`](https://magefile.org/).
-
-All command examples assume current working directory is the repository root.
+Unified is built primarily via [`mage`](https://magefile.org/). All command
+examples assume current working directory is the repository root.
 
 To build the `unified` CLI command you would run:
 
@@ -219,6 +220,10 @@ If you have a UniFi API host available, you can run integration tests:
 ```bash
 UNIFIED_HAVE_UNIFI_API_HOST=true go test -v ./test/integration/
 ```
+
+This will run an integration test that uses `./build/unified` to send requests
+to `https://unifi` and verify results.
+
 >[!WARNING]
 >While designed to be non-destructive to existing application objects and
 >configuration, some non-`GET` endpoints are called. Please take a look at
@@ -233,5 +238,11 @@ $ mage lint
 ```
 
 # Thanks
+
+Thanks for checking this project out. Hope it helps you in some way. If it does,
+consider [buying me a coffee](https://buymeacoffee.com/clifhouck) or
+otherwise contributing back to the project in some way.
+
+Thanks again!
 
 Copyright 2025 - Clifton Houck
