@@ -66,14 +66,10 @@ func NewProtectEventStreamHandler(ctx context.Context,
 		stream: stream,
 	}
 
-	// Should this be here, or should clients of this class call it
-	// explicitly?
-	go handler.processStream()
-
 	return handler
 }
 
-func (esh *ProtectEventStreamHandler) processStream() {
+func (esh *ProtectEventStreamHandler) Process() {
 	log.Info("Waiting for events...")
 	for {
 		select {

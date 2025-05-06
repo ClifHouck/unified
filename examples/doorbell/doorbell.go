@@ -84,6 +84,8 @@ func main() {
 		}
 	})
 
+	go streamHandler.Process()
+
 	<-ctx.Done()
 	log.Warn("Got context.Done!")
 }
