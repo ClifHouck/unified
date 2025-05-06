@@ -148,7 +148,7 @@ Access API might be supported in a future release. Contributions welcome here.
 ## TLS Verification Issue
 
 Unifi's provided TLS certificates are self-signed and do not sign for the `unifi`
-hostname. They *DO* sign for `unifi.local`, but the default DNS configuration
+hostname. They ***do*** sign for `unifi.local`, but the default DNS configuration
 for my UDM Pro does not seem to add an entry for `unifi.local`. Therefore TLS
 verification generally fails when `https` protocol connections are attemped.
 `unified` defaults to TLS verification being off.
@@ -184,7 +184,8 @@ Contributions are welcome!
 
 Before submiting any PRs, please ensure your commits build and lint. Also, take
 care to test any changes, and ideally submit unit tests or integration tests
-which cover your changes. PRs must pass all CI
+which cover your changes. PRs must pass all CI in order to be considered 
+acceptable to merge.
 
 If you'd like to contribute a feature or API support that doesn't yet exist,
 please communicate your intention through a new or existing GitHub issue. Let's
