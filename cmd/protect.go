@@ -54,7 +54,7 @@ var protectInfoCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(info)
+		err = marshalAndPrintJSON(info)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -95,7 +95,7 @@ var deviceEventsCmd = &cobra.Command{
 					"message.type": streamEvent.Type,
 				}).Info("Received ProtectDeviceEvent")
 
-				err = MarshalAndPrintJSON(item)
+				err = marshalAndPrintJSON(item)
 				if err != nil {
 					log.Error(err.Error())
 					return
@@ -142,7 +142,7 @@ var protectEventsCmd = &cobra.Command{
 					"message.type": streamEvent.Type,
 				}).Info("Received ProtectEvent")
 
-				err = MarshalAndPrintJSON(item)
+				err = marshalAndPrintJSON(item)
 				if err != nil {
 					log.Error(err.Error())
 					return
@@ -173,7 +173,7 @@ var cameraListCmd = &cobra.Command{
 				}
 			}
 		} else {
-			err = MarshalAndPrintJSON(cameras)
+			err = marshalAndPrintJSON(cameras)
 			if err != nil {
 				log.Error(err.Error())
 				return
@@ -193,7 +193,7 @@ var cameraDetailsCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(camera)
+		err = marshalAndPrintJSON(camera)
 		if err != nil {
 			log.Error(err.Error())
 			return

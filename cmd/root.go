@@ -6,6 +6,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -63,11 +64,6 @@ func Execute() {
 	rootCmd.AddCommand(networkCmd)
 	rootCmd.AddCommand(protectCmd)
 
-	if apiKey == "" {
-		apiKey = viper.GetString("unifi_api_key")
-		log.Debug("UniFi API key set from viper.")
-	}
-
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -93,18 +89,109 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Enable debug logging")
 
-	initConfig()
-
 	cobra.OnInitialize(configureLog)
+	cobra.OnInitialize(initConfig)
+}
+
+func getAPIKey() string {
+	if viper.IsSet("UNIFI_API_KEY") {
+		log.Debug("UniFi API key set from environment.")
+		return viper.GetString("UNIFI_API_KEY")
+	} else if viper.IsSet("apiKey") {
+		log.Debug("UniFi API key set from configuration file.")
+		return viper.GetString("apikey")
+	}
+	log.Fatal("Couldn't retrieve API key from configuration.")
+	return ""
+}
+
+func tryReadConfig(filename string) bool {
+	inFile, err := os.Open(filename)
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"filename": filename,
+		}).Errorf("Couldn't open specified config file: %s", err.Error())
+		return false
+	}
+
+	err = viper.ReadConfig(inFile)
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"filename": filename,
+		}).Errorf("Couldn't read specified config file: %s", err.Error())
+		return false
+	}
+
+	return true
 }
 
 func initConfig() {
-	// TODO: Implement logic to draw client configuration from:
-	// config, then env, then CLI args, in that order.
-	viper.MustBindEnv("UNIFI_API_KEY")
+	err := viper.BindEnv("UNIFI_API_KEY")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = viper.BindPFlag("host", rootCmd.Flags().Lookup("host"))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = viper.BindPFlag("keepAliveInterval", rootCmd.Flags().Lookup("keep-alive-interval"))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = viper.BindPFlag("insecure", rootCmd.Flags().Lookup("insecure"))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	viper.SetConfigName(".unified.yaml")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("$HOME/")
+	viper.AddConfigPath("$HOME/.unified/")
+	viper.AddConfigPath(".")
+
+	// If a config file is specified as a flag, try to load it first.
+	if cfgFile != "" {
+		if tryReadConfig(cfgFile) {
+			log.WithFields(logrus.Fields{
+				"file": cfgFile,
+			}).Debug("Unified config file loaded")
+
+			apiKey = getAPIKey()
+			return
+		}
+	}
+
+	// Fallback to default config locations.
+	err = viper.ReadInConfig()
+	if err != nil {
+		if errors.As(err, &viper.ConfigFileNotFoundError{}) {
+			log.Debug("Unified config file not found")
+		}
+		log.Error(err.Error())
+	}
+
+	log.WithFields(logrus.Fields{
+		"file": viper.ConfigFileUsed(),
+	}).Debug("Unified config file loaded")
+
+	apiKey = getAPIKey()
+
+	logConfig()
 }
 
-func MarshalAndPrintJSON(v any) error {
+func logConfig() {
+	log.WithFields(logrus.Fields{
+		"host":               hostname,
+		"isAPIKeySet":        len(apiKey) > 0,
+		"insecureSkipVerify": insecureSkipVerify,
+		"keepAliveInterval":  keepAliveInterval.String(),
+	}).Debug("Config values")
+}
+
+func marshalAndPrintJSON(v any) error {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err

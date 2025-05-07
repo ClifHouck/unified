@@ -111,7 +111,7 @@ var networkInfoCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(info)
+		err = marshalAndPrintJSON(info)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -172,13 +172,13 @@ and prints the results to stdout.`,
 					Page: *page,
 					Data: devices,
 				}
-				err = MarshalAndPrintJSON(results)
+				err = marshalAndPrintJSON(results)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
 			} else {
-				err = MarshalAndPrintJSON(devices)
+				err = marshalAndPrintJSON(devices)
 				if err != nil {
 					log.Error(err.Error())
 					return
@@ -203,7 +203,7 @@ ports and/or access point radios`,
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(device)
+		err = marshalAndPrintJSON(device)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -225,7 +225,7 @@ memory utilization, uptime, uplink tx/rx rates etc`,
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(stats)
+		err = marshalAndPrintJSON(stats)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -309,14 +309,14 @@ while if option is disabled it will return just the default site.`,
 					Page: *page,
 					Data: sites,
 				}
-				err = MarshalAndPrintJSON(results)
+				err = marshalAndPrintJSON(results)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
 			} else {
 
-				err = MarshalAndPrintJSON(sites)
+				err = marshalAndPrintJSON(sites)
 				if err != nil {
 					log.Error(err.Error())
 					return
@@ -356,14 +356,14 @@ or active VPN connections.`,
 					Page: *page,
 					Data: clients,
 				}
-				err = MarshalAndPrintJSON(results)
+				err = marshalAndPrintJSON(results)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
 			} else {
 
-				err = MarshalAndPrintJSON(clients)
+				err = marshalAndPrintJSON(clients)
 				if err != nil {
 					log.Error(err.Error())
 					return
@@ -384,7 +384,7 @@ var clientDetailsCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(client)
+		err = marshalAndPrintJSON(client)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -438,13 +438,13 @@ var listVouchersCmd = &cobra.Command{
 					Page: *page,
 					Data: vouchers,
 				}
-				err = MarshalAndPrintJSON(results)
+				err = marshalAndPrintJSON(results)
 				if err != nil {
 					log.Error(err.Error())
 					return
 				}
 			} else {
-				err = MarshalAndPrintJSON(vouchers)
+				err = marshalAndPrintJSON(vouchers)
 				if err != nil {
 					log.Error(err.Error())
 					return
@@ -465,7 +465,7 @@ var voucherDetailsCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(voucher)
+		err = marshalAndPrintJSON(voucher)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -484,7 +484,7 @@ var voucherGenerateCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(vouchers)
+		err = marshalAndPrintJSON(vouchers)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -506,7 +506,7 @@ var voucherDeleteCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(voucherDeleteResp)
+		err = marshalAndPrintJSON(voucherDeleteResp)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -535,7 +535,7 @@ var voucherDeleteByFilterCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
-		err = MarshalAndPrintJSON(voucherDeleteResp)
+		err = marshalAndPrintJSON(voucherDeleteResp)
 		if err != nil {
 			log.Error(err.Error())
 			return

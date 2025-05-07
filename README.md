@@ -36,32 +36,72 @@ If all goes well, you should see something like:
 
 Note that the output is valid JSON, just like the UniFi applications produce.
 
-## UniFi API Key Instructions
-Learn how to generate an API key from [UniFi's offcial documentation](https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API).
-Network and Protect are "Local Applications".
+`--debug` is a helpful flag if you'd like to see more information about `unified`'s
+operation.
 
->[!WARNING]
->Your API key is a sensitive secret! Please keep it securely stored.
->It gives *FULL* API access to your UniFi applications. If you need to revoke
->an API key navigate to your UniFi application and go to your Admin user:
->Settings -> Admins & User -> Select Admin account associated with the API key -> Click on API Key -> Remove.
+```bash
+$ unified network info --debug
+DEBU[0000] Unified config file loaded                    file=/home/clif/.unified.yaml
+DEBU[0000] UniFi API key set from configuration file.
+DEBU[0000] Config values                                 host=unifi insecureSkipVerify=true isAPIKeySet=true keepAliveInterval=30s
+DEBU[0000] https request success                         status=200 url="https://unifi/proxy/network/integration/v1/info"
+{
+  "applicationVersion": "9.1.120"
+}
+```
 
-You can always generate a new API key if necessary.
+Log output is printed to `stderr` by default. This way logging doesn't interfere
+with parsing of `unified`'s regular `stdout` output.
 
 # `unified` Command Line Usage
 
 `unified` has a full help system accessible through the `--help` flag.
 
-To access Network APIs you will use:
+To access the Network API you will use:
 
 ```bash
 $ unified network
 ```
 
-and for Protect APIs
+and for the Protect API use:
 ```bash
 $ unified protect
 ```
+
+## Configuration
+
+`unified` can be configured via a yaml file:
+
+```yaml
+host: "unifi.local"
+apiKey: "<redacted>"
+keep-alive-interval: "30s"
+insecure: true
+```
+
+Which can be located at one of the following:
+- `$HOME/.unified.yaml`
+- `$HOME/.unified/.unified.yaml`
+- `./.unified.yaml`
+
+Or you can manually specify which config file to use with the `--cfgFile` flag.
+
+## UniFi API Key Instructions
+Learn how to generate an API key from [UniFi's official documentation](https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API).
+Network and Protect are "Local Applications".
+
+>[!WARNING]
+>Your API key is a sensitive secret! Please keep it securely stored.
+>It gives ***FULL*** API access to your UniFi applications. If you need to revoke
+>an API key navigate to your UniFi application and then to your Admin user:
+>`Settings -> Admins & User -> Select Admin account associated with the API key -> Click on API Key -> Remove`.
+
+You can always generate a new API key if necessary.
+
+Now, you can pass your API key to `unified` in one of two ways:
+
+1. `UNIFI_API_KEY` environment variable.
+2. Configuration file `apiKey` setting.
 
 # Golang Client Usage
 

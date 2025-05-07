@@ -17,8 +17,6 @@ import (
 	"github.com/ClifHouck/unified/types"
 )
 
-const urlTemplate string = "%s://%s/proxy/%s/integration/v1/%s"
-
 type Config struct {
 	// The hostname of the unifi control plane.
 	Hostname string
@@ -131,6 +129,8 @@ type requestArgs struct {
 	Query        *url.Values
 }
 
+const urlTemplate string = "%s://%s/proxy/%s/integration/v1/%s"
+
 func (c *Client) renderURL(req *requestArgs) string {
 	renderedFragment := req.Endpoint.URLFragment
 
@@ -236,7 +236,7 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 	c.log.WithFields(logrus.Fields{
 		"url":    renderedURL,
 		"status": resp.StatusCode,
-	}).Debug("URL request success")
+	}).Debug("https request success")
 
 	return body, nil
 }
