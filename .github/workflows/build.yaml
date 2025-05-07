@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    name: Build Unified 
+    name: Unified Build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
