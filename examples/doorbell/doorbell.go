@@ -26,7 +26,7 @@ var apiKeyFilename string
 var rootCmd = &cobra.Command{
 	Use:   "doorbell",
 	Short: "Watch for ring events and play an MP3 when they occur",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		Doorbell()
 	},
 }
@@ -37,7 +37,10 @@ func init() {
 }
 
 func main() {
-	rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		log.Error(err.Error())
+	}
 }
 
 func Doorbell() {
@@ -63,6 +66,7 @@ func Doorbell() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	unifiClient := client.NewClient(ctx, config, log)
 
 	info, err := unifiClient.Protect.Info()
@@ -81,10 +85,8 @@ func Doorbell() {
 		log.WithFields(logrus.Fields{
 			"error": err.Error(),
 		}).Error("SubscribeProtectEvent encountered error")
-		cancel()
 		return
 	}
-	defer cancel()
 
 	stream, format, err := LoadMP3(mp3Filename)
 	if err != nil {
