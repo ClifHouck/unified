@@ -20,6 +20,6 @@ runs:
     with: 
       version: latest
   - uses: golangci/golangci-lint-action@v7
-    working-directory: ./examples/doorbell/
     with: 
       version: latest
+      working-directory: ./examples/doorbell/
