@@ -75,16 +75,16 @@ $ unified protect
 ```yaml
 host: "unifi.local"
 apiKey: "<redacted>"
-keep-alive-interval: "30s"
+keepAliveInterval: "30s"
 insecure: true
 ```
 
-Which can be located at one of the following:
+Which can be located at any of the following:
 - `$HOME/.unified.yaml`
 - `$HOME/.unified/.unified.yaml`
 - `./.unified.yaml`
 
-Or you can manually specify which config file to use with the `--cfgFile` flag.
+Or you can manually specify which config file to use with the `--config` flag.
 
 ## UniFi API Key Instructions
 Learn how to generate an API key from [UniFi's official documentation](https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API).
@@ -216,7 +216,7 @@ UniFi Protect API is only partially supported, with the following endpoints supp
 - `/v1/cameras/`
 - `/v1/cameras/{id}`
 
-UniFi Access API is not supported yet.
+UniFi Access API is not yet supported.
 
 # Contributing
 
