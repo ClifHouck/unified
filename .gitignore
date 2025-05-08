@@ -1,6 +1,14 @@
+# build targets
 build/
 bin/
-*.key
+
+# vim swap
 .*.sw*
+
 # Added by goreleaser init:
 dist/
+
+# ignore keys or configs which may have sensitive info inside
+*.key
+.unified.yaml
+unified.yaml
