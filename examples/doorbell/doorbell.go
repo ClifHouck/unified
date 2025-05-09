@@ -88,7 +88,7 @@ func Doorbell() {
 		return
 	}
 
-	stream, format, err := LoadMP3(mp3Filename)
+	stream, err := LoadMP3(mp3Filename)
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"error":    err.Error(),
@@ -107,7 +107,7 @@ func Doorbell() {
 		handlerMutex.Lock()
 		defer handlerMutex.Unlock()
 		if eventType == "add" {
-			PlayMP3(stream, format) // This is where the magic happens!
+			PlayMP3(stream) // This is where the magic happens!
 		}
 	})
 
@@ -117,28 +117,27 @@ func Doorbell() {
 	log.Warn("Got context.Done!")
 }
 
-func LoadMP3(filename string) (beep.StreamSeekCloser, *beep.Format, error) {
+func LoadMP3(filename string) (beep.StreamSeekCloser, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	streamer, format, err := mp3.Decode(f)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return streamer, &format, nil
+	err = speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+	if err != nil {
+		return nil, err
+	}
+
+	return streamer, nil
 }
 
-func PlayMP3(streamer beep.StreamSeekCloser, format *beep.Format) {
-	err := speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-	if err != nil {
-		log.Errorf("PlayMP3: speaker.Init failed with error: %s", err.Error())
-		return
-	}
-
-	err = streamer.Seek(0)
+func PlayMP3(streamer beep.StreamSeekCloser) {
+	err := streamer.Seek(0)
 	if err != nil {
 		log.Errorf("PlayMP3: streamer.Seek failed with error: %s", err.Error())
 		return
