@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 
@@ -42,6 +43,27 @@ var protectAPI = map[string]*apiEndpoint{
 		Application: "protect",
 		NumURLArgs:  1,
 	},
+	"Viewers": {
+		URLFragment: "viewers",
+		Method:      http.MethodGet,
+		Description: "Get all viewers",
+		Application: "protect",
+	},
+	"ViewerDetails": {
+		URLFragment: "viewers/%s",
+		Method:      http.MethodGet,
+		Description: "Get viewer details",
+		Application: "protect",
+		NumURLArgs:  1,
+	},
+	"ViewerSettings": {
+		URLFragment:    "viewers/%s",
+		Method:         http.MethodPatch,
+		Description:    "Patch the settings for a specific viewer",
+		Application:    "protect",
+		NumURLArgs:     1,
+		HasRequestBody: true,
+	},
 }
 
 type protectV1Client struct {
@@ -61,6 +83,74 @@ func (pc *protectV1Client) Info() (*types.ProtectInfo, error) {
 	}
 
 	return &info, nil
+}
+
+func (pc *protectV1Client) Viewers() ([]*types.Viewer, error) {
+	body, err := pc.client.doRequest(&requestArgs{Endpoint: protectAPI["Viewers"]})
+	if err != nil {
+		return nil, err
+	}
+
+	var viewers []*types.Viewer
+
+	err = json.Unmarshal(body, &viewers)
+	if err != nil {
+		return nil, err
+	}
+
+	return viewers, nil
+}
+
+func (pc *protectV1Client) ViewerDetails(viewerID types.ViewerID) (*types.Viewer, error) {
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["viewerDetails"],
+		URLArguments: []any{viewerID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var viewer *types.Viewer
+
+	err = json.Unmarshal(body, &viewer)
+	if err != nil {
+		return nil, err
+	}
+
+	return viewer, nil
+}
+
+func (pc *protectV1Client) ViewerSettings(
+	viewerID types.ViewerID,
+	settings *types.ViewerSettingsRequest,
+) (*types.Viewer, error) {
+	jsonBody, err := json.Marshal(settings)
+	pc.client.log.WithFields(logrus.Fields{
+		"method": "ViewerSettings",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return nil, err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     networkAPI["ViewerSettings"],
+		URLArguments: []any{viewerID},
+		RequestBody:  bodyReader,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var viewer *types.Viewer
+
+	err = json.Unmarshal(body, &viewer)
+	if err != nil {
+		return nil, err
+	}
+
+	return viewer, nil
 }
 
 func (pc *protectV1Client) Cameras() ([]*types.Camera, error) {

@@ -12,11 +12,18 @@ type ProtectV1 interface {
 	Cameras() ([]*Camera, error)
 	CameraDetails(CameraID) (*Camera, error)
 
+	// Viewer Information & Management
+	Viewers() ([]*Viewer, error)
+	ViewerDetails(ViewerID) (*Viewer, error)
+	ViewerSettings(ViewerID, *ViewerSettingsRequest) (*Viewer, error)
+
 	// TODO: Rest of protect API!
 }
 
 // CameraID is a UniFI protect Camera ID. Interestingly *not* a UUID.
 type CameraID string
+
+type ViewerID string
 
 type ProtectInfo struct {
 	ApplicationVersion string `json:"applicationVersion"`
@@ -60,4 +67,18 @@ type Camera struct {
 		ObjectTypes []string `json:"objectTypes"`
 		AudioTypes  []string `json:"audioTypes"`
 	} `json:"smartDetectSettings"`
+}
+
+type Viewer struct {
+	ID          string `json:"id"`
+	ModelKey    string `json:"modelKey"`
+	State       string `json:"state"`
+	Name        string `json:"name"`
+	Liveview    string `json:"liveview"`
+	StreamLimit int    `json:"streamLimit"`
+}
+
+type ViewerSettingsRequest struct {
+	Name     string `json:"name"`
+	Liveview string `json:"liveview"`
 }
