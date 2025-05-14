@@ -10,14 +10,26 @@ import (
 	"github.com/ClifHouck/unified/types"
 )
 
+var viewerSettingsReq = &types.ViewerSettingsRequest{
+	Name: "string",
+}
+
 func init() {
 	protectCmd.AddCommand(protectInfoCmd)
 	protectCmd.AddCommand(camerasCmd)
 	protectCmd.AddCommand(subscribeCmd)
+	protectCmd.AddCommand(viewersCmd)
 
 	// Subscriptions
 	subscribeCmd.AddCommand(deviceEventsCmd)
 	subscribeCmd.AddCommand(protectEventsCmd)
+
+	// Viewers
+	viewerListCmd.Flags().AddFlagSet(listingFlagSet)
+	viewersCmd.AddCommand(viewerListCmd)
+	viewersCmd.AddCommand(viewerDetailsCmd)
+	viewerSettingsCmd.Flags().StringVar(&viewerSettingsReq.Liveview, "liveview", "", "A live view ID to set")
+	viewersCmd.AddCommand(viewerSettingsCmd)
 
 	// Cameras
 	cameraListCmd.Flags().AddFlagSet(listingFlagSet)
@@ -35,6 +47,12 @@ var camerasCmd = &cobra.Command{
 	Use:   "cameras",
 	Short: "Make UniFi Protect `cameras` calls",
 	Long:  `Call camera endpoints under UniFi Protect's API.`,
+}
+
+var viewersCmd = &cobra.Command{
+	Use:   "viewers",
+	Short: "Make UniFi Protect `viewers` calls",
+	Long:  `Call viewer endpoints under UniFi Protect's API.`,
 }
 
 var subscribeCmd = &cobra.Command{
@@ -194,6 +212,70 @@ var cameraDetailsCmd = &cobra.Command{
 			return
 		}
 		err = marshalAndPrintJSON(camera)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var viewerListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all viewers",
+	Run: func(_ *cobra.Command, _ []string) {
+		c := getClient()
+		viewers, err := c.Protect.Viewers()
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		if idOnly {
+			for _, viewer := range viewers {
+				if idOnly {
+					fmt.Println(viewer.ID)
+				}
+			}
+		} else {
+			err = marshalAndPrintJSON(viewers)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
+		}
+	},
+}
+
+var viewerDetailsCmd = &cobra.Command{
+	Use:   "details [viewer ID]",
+	Short: "Get detailed information about a specific adopted device",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		viewer, err := c.Protect.ViewerDetails(types.ViewerID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(viewer)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var viewerSettingsCmd = &cobra.Command{
+	Use:   "settings [viewer ID]",
+	Short: "Patch the settings for a specific viewer",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		viewer, err := c.Protect.ViewerSettings(types.ViewerID(args[0]), viewerSettingsReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(viewer)
 		if err != nil {
 			log.Error(err.Error())
 			return
