@@ -135,7 +135,7 @@ func (pc *protectV1Client) ViewerSettings(
 
 	bodyReader := bytes.NewReader(jsonBody)
 	body, err := pc.client.doRequest(&requestArgs{
-		Endpoint:     networkAPI["ViewerSettings"],
+		Endpoint:     protectAPI["ViewerSettings"],
 		URLArguments: []any{viewerID},
 		RequestBody:  bodyReader,
 	})
