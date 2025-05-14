@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -19,6 +20,7 @@ func init() {
 	protectCmd.AddCommand(camerasCmd)
 	protectCmd.AddCommand(subscribeCmd)
 	protectCmd.AddCommand(viewersCmd)
+	protectCmd.AddCommand(liveViewsCmd)
 
 	// Subscriptions
 	subscribeCmd.AddCommand(deviceEventsCmd)
@@ -30,6 +32,13 @@ func init() {
 	viewersCmd.AddCommand(viewerDetailsCmd)
 	viewerSettingsCmd.Flags().StringVar(&viewerSettingsReq.Liveview, "liveview", "", "A live view ID to set")
 	viewersCmd.AddCommand(viewerSettingsCmd)
+
+	// Live Views
+	liveViewListCmd.Flags().AddFlagSet(listingFlagSet)
+	liveViewsCmd.AddCommand(liveViewListCmd)
+	liveViewsCmd.AddCommand(liveViewDetailsCmd)
+	liveViewsCmd.AddCommand(liveViewCreateCmd)
+	liveViewsCmd.AddCommand(liveViewPatchCmd)
 
 	// Cameras
 	cameraListCmd.Flags().AddFlagSet(listingFlagSet)
@@ -53,6 +62,12 @@ var viewersCmd = &cobra.Command{
 	Use:   "viewers",
 	Short: "Make UniFi Protect `viewers` calls",
 	Long:  `Call viewer endpoints under UniFi Protect's API.`,
+}
+
+var liveViewsCmd = &cobra.Command{
+	Use:   "liveviews",
+	Short: "Make UniFi Protect `liveviews` calls",
+	Long:  `Call liveview endpoints under UniFi Protect's API.`,
 }
 
 var subscribeCmd = &cobra.Command{
@@ -247,7 +262,7 @@ var viewerListCmd = &cobra.Command{
 
 var viewerDetailsCmd = &cobra.Command{
 	Use:   "details [viewer ID]",
-	Short: "Get detailed information about a specific adopted device",
+	Short: "Get detailed information about a viewer",
 	Args:  cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		c := getClient()
@@ -276,6 +291,115 @@ var viewerSettingsCmd = &cobra.Command{
 			return
 		}
 		err = marshalAndPrintJSON(viewer)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var liveViewListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all liveviews",
+	Run: func(_ *cobra.Command, _ []string) {
+		c := getClient()
+		liveViews, err := c.Protect.LiveViews()
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		if idOnly {
+			for _, liveView := range liveViews {
+				if idOnly {
+					fmt.Println(liveView.ID)
+				}
+			}
+		} else {
+			err = marshalAndPrintJSON(liveViews)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
+		}
+	},
+}
+
+var liveViewDetailsCmd = &cobra.Command{
+	Use:   "details [liveview ID]",
+	Short: "Get detailed information about a liveview",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		liveView, err := c.Protect.LiveViewDetails(types.LiveViewID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(liveView)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var liveViewCreateCmd = &cobra.Command{
+	Use:   "create [liveview JSON filename]",
+	Short: "Create a new liveview",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		data, err := os.ReadFile(args[0])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		var liveView types.LiveView
+		err = json.Unmarshal(data, &liveView)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		c := getClient()
+		newLiveView, err := c.Protect.LiveViewCreate(&liveView)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(newLiveView)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var liveViewPatchCmd = &cobra.Command{
+	Use:   "patch [liveview ID] [liveview JSON filename]",
+	Short: "Patch the configuration of an existing liveview",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		var liveView types.LiveView
+		err = json.Unmarshal(data, &liveView)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		c := getClient()
+		modifiedLiveView, err := c.Protect.LiveViewPatch(types.LiveViewID(args[0]), &liveView)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(modifiedLiveView)
 		if err != nil {
 			log.Error(err.Error())
 			return

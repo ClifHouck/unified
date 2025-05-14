@@ -11,6 +11,9 @@ import (
 	"github.com/ClifHouck/unified/types"
 )
 
+// FIXME - This pattern is not great because these are tightly coupled with
+// their individual methods. Refactor this to store the ApiEndpoint struct
+// with the method somehow.
 var protectAPI = map[string]*apiEndpoint{
 	"Info": {
 		URLFragment: "meta/info",
@@ -63,6 +66,34 @@ var protectAPI = map[string]*apiEndpoint{
 		Application:    "protect",
 		NumURLArgs:     1,
 		HasRequestBody: true,
+	},
+	"LiveViews": {
+		URLFragment: "liveviews",
+		Method:      http.MethodGet,
+		Description: "Get all liveviews",
+		Application: "protect",
+	},
+	"LiveViewDetails": {
+		URLFragment: "liveviews/%s",
+		Method:      http.MethodGet,
+		Description: "Get liveview details",
+		Application: "protect",
+		NumURLArgs:  1,
+	},
+	"LiveViewCreate": {
+		URLFragment:    "liveviews",
+		Method:         http.MethodPost,
+		Description:    "Create a new live view",
+		Application:    "protect",
+		HasRequestBody: true,
+	},
+	"LiveViewPatch": {
+		URLFragment:    "liveviews/%s",
+		Method:         http.MethodPatch,
+		Description:    "Patch the configuration about a specific live view",
+		Application:    "protect",
+		HasRequestBody: true,
+		NumURLArgs:     1,
 	},
 }
 
@@ -324,4 +355,98 @@ func (pc *protectV1Client) SubscribeDeviceEvents() (<-chan *types.ProtectDeviceE
 	}()
 
 	return eventChan, nil
+}
+
+func (pc *protectV1Client) LiveViews() ([]*types.LiveView, error) {
+	body, err := pc.client.doRequest(&requestArgs{Endpoint: protectAPI["LiveViews"]})
+	if err != nil {
+		return nil, err
+	}
+
+	var liveViews []*types.LiveView
+
+	err = json.Unmarshal(body, &liveViews)
+	if err != nil {
+		return nil, err
+	}
+
+	return liveViews, nil
+}
+
+func (pc *protectV1Client) LiveViewDetails(liveViewID types.LiveViewID) (*types.LiveView, error) {
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["LiveViewDetails"],
+		URLArguments: []any{liveViewID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var liveView *types.LiveView
+
+	err = json.Unmarshal(body, &liveView)
+	if err != nil {
+		return nil, err
+	}
+
+	return liveView, nil
+}
+
+func (pc *protectV1Client) LiveViewCreate(lv *types.LiveView) (*types.LiveView, error) {
+	jsonBody, err := json.Marshal(lv)
+	pc.client.log.WithFields(logrus.Fields{
+		"method": "LiveViewCreate",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return nil, err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:    protectAPI["LiveViewCreate"],
+		RequestBody: bodyReader,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var liveView *types.LiveView
+
+	err = json.Unmarshal(body, &liveView)
+	if err != nil {
+		return nil, err
+	}
+
+	return liveView, nil
+}
+
+func (pc *protectV1Client) LiveViewPatch(liveViewID types.LiveViewID, lv *types.LiveView) (*types.LiveView, error) {
+	jsonBody, err := json.Marshal(lv)
+	pc.client.log.WithFields(logrus.Fields{
+		"method": "LiveViewPatch",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return nil, err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["LiveViewPatch"],
+		URLArguments: []any{liveViewID},
+		RequestBody:  bodyReader,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var liveView *types.LiveView
+
+	err = json.Unmarshal(body, &liveView)
+	if err != nil {
+		return nil, err
+	}
+
+	return liveView, nil
 }

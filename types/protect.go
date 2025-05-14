@@ -17,6 +17,13 @@ type ProtectV1 interface {
 	ViewerDetails(ViewerID) (*Viewer, error)
 	ViewerSettings(ViewerID, *ViewerSettingsRequest) (*Viewer, error)
 
+	// Live View Management
+	LiveViews() ([]*LiveView, error)
+	LiveViewPatch(LiveViewID, *LiveView) (*LiveView, error)
+	LiveViewDetails(LiveViewID) (*LiveView, error)
+	LiveViewCreate(*LiveView) (*LiveView, error)
+	// TODO: But where is DELETE?
+
 	// TODO: Rest of protect API!
 }
 
@@ -24,6 +31,8 @@ type ProtectV1 interface {
 type CameraID string
 
 type ViewerID string
+
+type LiveViewID string
 
 type ProtectInfo struct {
 	ApplicationVersion string `json:"applicationVersion"`
@@ -81,4 +90,19 @@ type Viewer struct {
 type ViewerSettingsRequest struct {
 	Name     string `json:"name"`
 	Liveview string `json:"liveview"`
+}
+
+type LiveView struct {
+	ID        string `json:"id,omitempty"`
+	ModelKey  string `json:"modelKey,omitempty"`
+	Name      string `json:"name"`
+	IsDefault bool   `json:"isDefault,omitempty"`
+	IsGlobal  bool   `json:"isGlobal"`
+	Owner     string `json:"owner,omitempty"`
+	Layout    int    `json:"layout"`
+	Slots     []struct {
+		Cameras       []string `json:"cameras"`
+		CycleMode     string   `json:"cycleMode"`
+		CycleInterval int      `json:"cycleInterval"`
+	} `json:"slots"`
 }
