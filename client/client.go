@@ -225,6 +225,9 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 				"message": unifiError.Message,
 			}).Error("UniFi application returned an error")
 		}
+		if err != nil {
+			c.log.Errorf("Could not decode UniFi error despite bad response code: %s", err.Error())
+		}
 
 		return nil, fmt.Errorf(
 			"got unexpected http code %d when requesting '%s'",
