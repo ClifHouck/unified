@@ -1,9 +1,9 @@
 module github.com/ClifHouck/unified/examples/doorbell
 
-go 1.23.8
+go 1.24.3
 
 require (
-	github.com/ClifHouck/unified v0.0.0-20250504131910-33720fcc5f07
+	github.com/ClifHouck/unified v0.1.0
 	github.com/gopxl/beep v1.4.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
