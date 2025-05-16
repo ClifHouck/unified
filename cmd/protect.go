@@ -22,6 +22,9 @@ var (
 	mediumQuality  bool
 	lowQuality     bool
 	packageQuality bool
+
+	snapshotLowQuality  bool
+	snapshotJPEGQuality int
 )
 
 var qualitiesFlagSet = pflag.NewFlagSet("qualities", pflag.ExitOnError)
@@ -61,7 +64,11 @@ func init() {
 	camerasCmd.AddCommand(cameraListCmd)
 	camerasCmd.AddCommand(cameraDetailsCmd)
 	camerasCmd.AddCommand(cameraPatchCmd)
+
+	cameraGetSnapshotCmd.Flags().BoolVar(&snapshotLowQuality, "low-quality", false, "snapshot low quality")
+	cameraGetSnapshotCmd.Flags().IntVar(&snapshotJPEGQuality, "jpeg-quality", 100, "JPEG Quality from 1 to 100")
 	camerasCmd.AddCommand(cameraGetSnapshotCmd)
+
 	// TODO: Should this be a sub-command of a new rtspstream command?
 	cameraRTSPSStreamCreateCmd.Flags().AddFlagSet(qualitiesFlagSet)
 	camerasCmd.AddCommand(cameraRTSPSStreamCreateCmd)
@@ -297,9 +304,13 @@ var cameraGetSnapshotCmd = &cobra.Command{
 	Short: "Get a live snapshot image from a specified camera and save it to a file",
 	Args:  cobra.ExactArgs(2),
 	Run: func(_ *cobra.Command, args []string) {
+		if (snapshotJPEGQuality < 1 || snapshotJPEGQuality > 100) {
+			log.Errorf("--jpeg-quality must be between 1 and 100, got '%d'", snapshotJPEGQuality)
+			return
+		}
+
 		c := getClient()
-		// FIXME: Plumb quality flag
-		image, err := c.Protect.CameraGetSnapshot(types.CameraID(args[0]), true)
+		image, err := c.Protect.CameraGetSnapshot(types.CameraID(args[0]), !snapshotLowQuality)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -311,8 +322,7 @@ var cameraGetSnapshotCmd = &cobra.Command{
 			return
 		}
 
-		// FIXME Plumb quality flag
-		err = jpeg.Encode(outfile, image, &jpeg.Options{Quality: 100})
+		err = jpeg.Encode(outfile, image, &jpeg.Options{Quality: snapshotJPEGQuality})
 		if err != nil {
 			log.Error(err.Error())
 			return
