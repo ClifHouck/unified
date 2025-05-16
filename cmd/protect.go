@@ -30,10 +30,10 @@ var (
 var qualitiesFlagSet = pflag.NewFlagSet("qualities", pflag.ExitOnError)
 
 func init() {
-	qualitiesFlagSet.BoolVar(&highQuality, "high", false, "high quality")
-	qualitiesFlagSet.BoolVar(&mediumQuality, "medium", false, "medium quality")
-	qualitiesFlagSet.BoolVar(&lowQuality, "low", false, "low quality")
-	qualitiesFlagSet.BoolVar(&packageQuality, "package", false, "package quality")
+	qualitiesFlagSet.BoolVar(&highQuality, "high", false, "high stream quality")
+	qualitiesFlagSet.BoolVar(&mediumQuality, "medium", false, "medium stream quality")
+	qualitiesFlagSet.BoolVar(&lowQuality, "low", false, "low stream quality")
+	qualitiesFlagSet.BoolVar(&packageQuality, "package", false, "package stream quality")
 
 	protectCmd.AddCommand(protectInfoCmd)
 	protectCmd.AddCommand(camerasCmd)
@@ -304,7 +304,7 @@ var cameraGetSnapshotCmd = &cobra.Command{
 	Short: "Get a live snapshot image from a specified camera and save it to a file",
 	Args:  cobra.ExactArgs(2),
 	Run: func(_ *cobra.Command, args []string) {
-		if (snapshotJPEGQuality < 1 || snapshotJPEGQuality > 100) {
+		if snapshotJPEGQuality < 1 || snapshotJPEGQuality > 100 {
 			log.Errorf("--jpeg-quality must be between 1 and 100, got '%d'", snapshotJPEGQuality)
 			return
 		}
@@ -357,9 +357,10 @@ var cameraRTSPSStreamCreateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		c := getClient()
-		resp, err := c.Protect.CameraCreateRTSPSStream(types.CameraID(args[0]), &types.CameraCreateRTSPSStreamRequest{
-			Qualities: qualities(),
-		})
+		resp, err := c.Protect.CameraCreateRTSPSStream(
+			types.CameraID(args[0]),
+			&types.CameraCreateRTSPSStreamRequest{Qualities: qualities()},
+		)
 		if err != nil {
 			log.Error(err.Error())
 			return
