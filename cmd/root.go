@@ -34,6 +34,7 @@ var (
 	keepAliveInterval  time.Duration
 	insecureSkipVerify bool
 	debugLogging       bool
+	traceLogging       bool
 )
 
 func getClientConfig() *client.Config {
@@ -88,6 +89,7 @@ func init() {
 		"Skip verification of UniFi TLS certificate.")
 
 	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Enable debug logging")
+	rootCmd.PersistentFlags().BoolVar(&traceLogging, "trace", false, "Enable trace logging")
 
 	cobra.OnInitialize(configureLog)
 	cobra.OnInitialize(initConfig)
@@ -207,5 +209,8 @@ func configureLog() {
 	log.SetLevel(logrus.InfoLevel)
 	if debugLogging {
 		log.SetLevel(logrus.DebugLevel)
+	}
+	if traceLogging {
+		log.SetLevel(logrus.TraceLevel)
 	}
 }

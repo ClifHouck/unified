@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"image/jpeg"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -44,6 +45,14 @@ func init() {
 	cameraListCmd.Flags().AddFlagSet(listingFlagSet)
 	camerasCmd.AddCommand(cameraListCmd)
 	camerasCmd.AddCommand(cameraDetailsCmd)
+	camerasCmd.AddCommand(cameraPatchCmd)
+	camerasCmd.AddCommand(cameraGetSnapshotCmd)
+	// TODO: Should this be a sub-command of a new rtspstream command?
+	camerasCmd.AddCommand(cameraRTSPSStreamCreateCmd)
+	camerasCmd.AddCommand(cameraRTSPSStreamDeleteCmd)
+	camerasCmd.AddCommand(cameraRTSPSStreamGetCmd)
+	camerasCmd.AddCommand(cameraDisableMicPermanentlyCmd)
+	camerasCmd.AddCommand(cameraTalkbackSessionCmd)
 }
 
 var protectCmd = &cobra.Command{
@@ -227,6 +236,170 @@ var cameraDetailsCmd = &cobra.Command{
 			return
 		}
 		err = marshalAndPrintJSON(camera)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraPatchCmd = &cobra.Command{
+	Use:   "patch [camera ID] [camera JSON filename]",
+	Short: "Patch the configuration of an existing camera",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		var cameraReq types.CameraPatchRequest
+		err = json.Unmarshal(data, &cameraReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		c := getClient()
+		modifiedCamera, err := c.Protect.CameraPatch(types.CameraID(args[0]), &cameraReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(modifiedCamera)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraGetSnapshotCmd = &cobra.Command{
+	Use:   "snapshot [camera ID] [filename]",
+	Short: "Get a live snapshot image from a specified camera and save it to a file",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		// FIXME: Plumb quality flag
+		image, err := c.Protect.CameraGetSnapshot(types.CameraID(args[0]), true)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		outfile, err := os.Create(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		// FIXME Plumb quality flag
+		err = jpeg.Encode(outfile, image, &jpeg.Options{Quality: 100})
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		log.WithFields(logrus.Fields{
+			"filename": args[1],
+		}).Infof("Saved snapshot to file")
+	},
+}
+
+var cameraRTSPSStreamCreateCmd = &cobra.Command{
+	Use:   "stream-create [camera ID]",
+	Short: "Create RTSPS stream(s), based on qualities specified, for a camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		// FIXME: Plumb qualities
+		resp, err := c.Protect.CameraCreateRTSPSStream(types.CameraID(args[0]), &types.CameraCreateRTSPSStreamRequest{
+			Qualities: []string{"high"},
+		})
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		err = marshalAndPrintJSON(resp)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraRTSPSStreamDeleteCmd = &cobra.Command{
+	Use:   "stream-delete [camera ID]",
+	Short: "Delete RTSPS stream(s), based on qualities specified, for a camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		// FIXME: Plumb qualities
+		err := c.Protect.CameraDeleteRTSPSStream(types.CameraID(args[0]), &types.CameraDeleteRTSPSStreamRequest{
+			Qualities: []string{"high"},
+		})
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		log.Info("204 - No Content - OK")
+	},
+}
+
+var cameraRTSPSStreamGetCmd = &cobra.Command{
+	Use:   "stream-get [camera ID]",
+	Short: "Get RTSPS streams that exist for a camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		resp, err := c.Protect.CameraGetRTSPSStream(types.CameraID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		err = marshalAndPrintJSON(resp)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraDisableMicPermanentlyCmd = &cobra.Command{
+	Use:   "disable-mic-permanently [camera ID]",
+	Short: "Permanently disable the microphone for a specific camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		camera, err := c.Protect.CameraDisableMicPermanently(types.CameraID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(camera)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraTalkbackSessionCmd = &cobra.Command{
+	Use:   "talkback-session [camera ID]",
+	Short: "Get the talkback stream URL and audio config for a camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		cameraTalkbackResp, err := c.Protect.CameraTalkbackSession(types.CameraID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(cameraTalkbackResp)
 		if err != nil {
 			log.Error(err.Error())
 			return
