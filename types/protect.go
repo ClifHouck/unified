@@ -1,16 +1,12 @@
 package types
 
+import (
+	"image"
+)
+
 type ProtectV1 interface {
 	// About application
 	Info() (*ProtectInfo, error)
-
-	// Websocket updates
-	SubscribeDeviceEvents() (<-chan *ProtectDeviceEvent, error)
-	SubscribeProtectEvents() (<-chan *ProtectEvent, error)
-
-	// Camera Information & Management
-	Cameras() ([]*Camera, error)
-	CameraDetails(CameraID) (*Camera, error)
 
 	// Viewer Information & Management
 	Viewers() ([]*Viewer, error)
@@ -23,6 +19,24 @@ type ProtectV1 interface {
 	LiveViewDetails(LiveViewID) (*LiveView, error)
 	LiveViewCreate(*LiveView) (*LiveView, error)
 	// TODO: But where is DELETE?
+
+	// Websocket updates
+	SubscribeDeviceEvents() (<-chan *ProtectDeviceEvent, error)
+	SubscribeProtectEvents() (<-chan *ProtectEvent, error)
+
+	// Camera Information & Management
+	Cameras() ([]*Camera, error)
+	CameraDetails(CameraID) (*Camera, error)
+	CameraPatch(CameraID, *CameraPatchRequest) (*Camera, error)
+
+	CameraCreateRTSPSStream(CameraID, *CameraCreateRTSPSStreamRequest) (*CameraCreateRTSPSStreamResponse, error)
+	CameraDeleteRTSPSStream(CameraID, *CameraDeleteRTSPSStreamRequest) error
+	CameraGetRTSPSStream(CameraID) (*CameraGetRTSPSStreamResponse, error)
+
+	CameraGetSnapshot(CameraID, bool) (image.Image, error)
+
+	CameraDisableMicPermanently(CameraID) (*Camera, error)
+	CameraTalkbackSession(CameraID) (*CameraTalkbackSessionResponse, error)
 
 	// TODO: Rest of protect API!
 }
@@ -78,6 +92,33 @@ type Camera struct {
 	} `json:"smartDetectSettings"`
 }
 
+type lcdMessage struct {
+	Type    string `json:"type,omitempty"`
+	ResetAt int    `json:"resetAt,omitempty"`
+	Text    string `json:"text,omitempty"`
+}
+
+type CameraPatchRequest struct {
+	Name        string `json:"name,omitempty"`
+	OsdSettings struct {
+		IsNameEnabled  bool `json:"isNameEnabled,omitempty"`
+		IsDateEnabled  bool `json:"isDateEnabled,omitempty"`
+		IsLogoEnabled  bool `json:"isLogoEnabled,omitempty"`
+		IsDebugEnabled bool `json:"isDebugEnabled,omitempty"`
+	} `json:"osdSettings,omitzero"`
+	LedSettings struct {
+		IsEnabled bool `json:"isEnabled,omitempty"`
+	} `json:"ledSettings,omitzero"`
+	LcdMessage          lcdMessage `json:"lcdMessage,omitzero"`
+	MicVolume           int        `json:"micVolume,omitzero"`
+	VideoMode           string     `json:"videoMode,omitempty"`
+	HdrType             string     `json:"hdrType,omitempty"`
+	SmartDetectSettings struct {
+		ObjectTypes []string `json:"objectTypes,omitempty"`
+		AudioTypes  []string `json:"audioTypes,omitempty"`
+	} `json:"smartDetectSettings,omitzero"`
+}
+
 type Viewer struct {
 	ID          string `json:"id"`
 	ModelKey    string `json:"modelKey"`
@@ -105,4 +146,46 @@ type LiveView struct {
 		CycleMode     string   `json:"cycleMode"`
 		CycleInterval int      `json:"cycleInterval"`
 	} `json:"slots"`
+}
+
+type CameraCreateRTSPSStreamRequest struct {
+	Qualities []string `json:"qualities"`
+}
+
+type CameraDeleteRTSPSStreamRequest struct {
+	Qualities []string `json:"qualities"`
+}
+
+type CameraCreateRTSPSStreamResponse struct {
+	cameraStreamQualities
+}
+
+type CameraGetRTSPSStreamResponse struct {
+	cameraStreamQualities
+}
+
+type cameraStreamQualities struct {
+	High    string `json:"high,omitempty"`
+	Medium  string `json:"medium,omitempty"`
+	Low     string `json:"low,omitempty"`
+	Package string `json:"package,omitempty"`
+}
+
+type ProtectErrorMessage struct {
+	Error  string `json:"error"`
+	Name   string `json:"name"`
+	Entity string `json:"entity"`
+	Issues []struct {
+		InstancePath string `json:"instancePath"`
+		Message      string `json:"message"`
+		Keyword      string `json:"keyword"`
+	} `json:"issues"`
+	Body interface{} `json:"body"`
+}
+
+type CameraTalkbackSessionResponse struct {
+	URL           string `json:"url"`
+	Codec         string `json:"codec"`
+	SamplingRate  int    `json:"samplingRate"`
+	BitsPerSample int    `json:"bitsPerSample"`
 }

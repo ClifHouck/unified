@@ -3,7 +3,10 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"image"
+	"image/jpeg"
 	"net/http"
+	"net/url"
 
 	"github.com/coder/websocket"
 	"github.com/sirupsen/logrus"
@@ -43,6 +46,59 @@ var protectAPI = map[string]*apiEndpoint{
 		URLFragment: "cameras/%s",
 		Method:      http.MethodGet,
 		Description: "Get camera details",
+		Application: "protect",
+		NumURLArgs:  1,
+	},
+	"CameraPatch": {
+		URLFragment:    "cameras/%s",
+		Method:         http.MethodPatch,
+		Description:    "Patch the settings for a specific camera",
+		Application:    "protect",
+		NumURLArgs:     1,
+		HasRequestBody: true,
+	},
+	"CameraCreateRTSPSStream": {
+		URLFragment:    "cameras/%s/rtsps-stream",
+		Method:         http.MethodPost,
+		Description:    "Returns RTSPS stream URLs for specified quality levels",
+		Application:    "protect",
+		NumURLArgs:     1,
+		HasRequestBody: true,
+	},
+	"CameraDeleteRTSPSStream": {
+		URLFragment:    "cameras/%s/rtsps-stream",
+		Method:         http.MethodDelete,
+		Description:    "Removes the RTSPS stream for a specified camera",
+		Application:    "protect",
+		NumURLArgs:     1,
+		NumQueryArgs:   1,
+		ExpectedStatus: http.StatusNoContent,
+	},
+	"CameraGetRTSPSStream": {
+		URLFragment: "cameras/%s/rtsps-stream",
+		Description: "Gets existing RTSPS streams for a specified camera",
+		Application: "protect",
+		NumURLArgs:  1,
+	},
+	"CameraGetSnapshot": {
+		URLFragment:  "cameras/%s/snapshot",
+		Method:       http.MethodGet,
+		Description:  "Get camera details",
+		Application:  "protect",
+		NumURLArgs:   1,
+		NumQueryArgs: 1,
+	},
+	"CameraDisableMicPermanently": {
+		URLFragment: "cameras/%s/disable-mic-permanently",
+		Method:      http.MethodPost,
+		Description: "Disable the microphone for a specific camera",
+		Application: "protect",
+		NumURLArgs:  1,
+	},
+	"CameraTalkbackSession": {
+		URLFragment: "cameras/%s/talkback-session",
+		Method:      http.MethodPost,
+		Description: "Get the talkback stream URL and audio config for a camera",
 		Application: "protect",
 		NumURLArgs:  1,
 	},
@@ -217,6 +273,185 @@ func (pc *protectV1Client) CameraDetails(cameraID types.CameraID) (*types.Camera
 	}
 
 	return camera, nil
+}
+
+func (pc *protectV1Client) CameraPatch(
+	cameraID types.CameraID,
+	camera *types.CameraPatchRequest,
+) (*types.Camera, error) {
+	jsonBody, err := json.Marshal(camera)
+	pc.client.log.WithFields(logrus.Fields{
+		"method": "CameraPatch",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return nil, err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraPatch"],
+		URLArguments: []any{cameraID},
+		RequestBody:  bodyReader,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedCamera *types.Camera
+
+	err = json.Unmarshal(body, &updatedCamera)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedCamera, nil
+}
+
+func (pc *protectV1Client) CameraCreateRTSPSStream(
+	cameraID types.CameraID,
+	req *types.CameraCreateRTSPSStreamRequest,
+) (*types.CameraCreateRTSPSStreamResponse, error) {
+	jsonBody, err := json.Marshal(req)
+	pc.client.log.WithFields(logrus.Fields{
+		"method": "CameraCreateRTSPSStream",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return nil, err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraCreateRTSPSStream"],
+		URLArguments: []any{cameraID},
+		RequestBody:  bodyReader,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp *types.CameraCreateRTSPSStreamResponse
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (pc *protectV1Client) CameraDeleteRTSPSStream(
+	cameraID types.CameraID,
+	req *types.CameraDeleteRTSPSStreamRequest,
+) error {
+	query := &url.Values{}
+	for _, qual := range req.Qualities {
+		query.Add("qualities[]", qual)
+	}
+
+	_, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraDeleteRTSPSStream"],
+		URLArguments: []any{cameraID},
+		Query:        query,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (pc *protectV1Client) CameraGetRTSPSStream(
+	cameraID types.CameraID,
+) (*types.CameraGetRTSPSStreamResponse, error) {
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraGetRTSPSStream"],
+		URLArguments: []any{cameraID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp *types.CameraGetRTSPSStreamResponse
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (pc *protectV1Client) CameraGetSnapshot(
+	cameraID types.CameraID,
+	highQuality bool,
+) (image.Image, error) {
+	query := &url.Values{}
+	quality := "false"
+	if highQuality {
+		quality = "true"
+	}
+	query.Add("highQuality", quality)
+
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraGetSnapshot"],
+		URLArguments: []any{cameraID},
+		Query:        query,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	reader := bytes.NewReader(body)
+	image, err := jpeg.Decode(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return image, nil
+}
+
+func (pc *protectV1Client) CameraDisableMicPermanently(
+	cameraID types.CameraID,
+) (*types.Camera, error) {
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraDisableMicPermanently"],
+		URLArguments: []any{cameraID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var camera *types.Camera
+
+	err = json.Unmarshal(body, &camera)
+	if err != nil {
+		return nil, err
+	}
+
+	return camera, nil
+}
+
+func (pc *protectV1Client) CameraTalkbackSession(
+	cameraID types.CameraID,
+) (*types.CameraTalkbackSessionResponse, error) {
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraTalkbackSession"],
+		URLArguments: []any{cameraID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var cameraTalkbackResp *types.CameraTalkbackSessionResponse
+
+	err = json.Unmarshal(body, &cameraTalkbackResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return cameraTalkbackResp, nil
 }
 
 func (pc *protectV1Client) SubscribeProtectEvents() (<-chan *types.ProtectEvent, error) {
@@ -421,7 +656,10 @@ func (pc *protectV1Client) LiveViewCreate(lv *types.LiveView) (*types.LiveView, 
 	return liveView, nil
 }
 
-func (pc *protectV1Client) LiveViewPatch(liveViewID types.LiveViewID, lv *types.LiveView) (*types.LiveView, error) {
+func (pc *protectV1Client) LiveViewPatch(
+	liveViewID types.LiveViewID,
+	lv *types.LiveView,
+) (*types.LiveView, error) {
 	jsonBody, err := json.Marshal(lv)
 	pc.client.log.WithFields(logrus.Fields{
 		"method": "LiveViewPatch",

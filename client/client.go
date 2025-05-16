@@ -169,6 +169,42 @@ func (c *Client) renderURL(req *requestArgs) string {
 	return url
 }
 
+func (c *Client) decodeErrorResponse(body []byte) {
+	var unifiError types.Error
+	err := json.Unmarshal(body, &unifiError)
+
+	switch {
+	case err == nil && unifiError.StatusCode != 0:
+		c.log.WithFields(logrus.Fields{
+			"code":    unifiError.StatusCode,
+			"name":    unifiError.StatusName,
+			"message": unifiError.Message,
+		}).Error("UniFi application returned an error")
+	case err == nil && unifiError.StatusCode == 0:
+		// This is probably an undocumented Protect Error
+		var protectError types.ProtectErrorMessage
+		protectErr := json.Unmarshal(body, &protectError)
+		if protectErr != nil {
+			c.log.Error("Could not unwrap error message as ProtectErrorMessage")
+			break
+		}
+		c.log.WithFields(logrus.Fields{"code": protectError.Error,
+			"name":   protectError.Name,
+			"entity": protectError.Entity,
+		}).Error("UniFi application returned a protect error")
+
+		for _, issue := range protectError.Issues {
+			c.log.WithFields(logrus.Fields{
+				"instance_path": issue.InstancePath,
+				"keyword":       issue.Keyword,
+			}).Errorf("Issue with Request: %s", issue.Message)
+		}
+	default:
+		c.log.Debug(string(body))
+		c.log.Errorf("Could not decode UniFi error despite bad response code: %s", err.Error())
+	}
+}
+
 func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 	renderedURL := c.renderURL(req)
 
@@ -216,18 +252,7 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 	}
 
 	if resp.StatusCode != expectedStatus {
-		var unifiError types.Error
-		err = json.Unmarshal(body, &unifiError)
-		if err == nil && unifiError.StatusCode != 0 {
-			c.log.WithFields(logrus.Fields{
-				"code":    unifiError.StatusCode,
-				"name":    unifiError.StatusName,
-				"message": unifiError.Message,
-			}).Error("UniFi application returned an error")
-		}
-		if err != nil {
-			c.log.Errorf("Could not decode UniFi error despite bad response code: %s", err.Error())
-		}
+		c.decodeErrorResponse(body)
 
 		return nil, fmt.Errorf(
 			"got unexpected http code %d when requesting '%s'",

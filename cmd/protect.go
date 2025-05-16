@@ -3,10 +3,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"image/jpeg"
 	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/ClifHouck/unified/types"
 )
@@ -15,7 +17,24 @@ var viewerSettingsReq = &types.ViewerSettingsRequest{
 	Name: "string",
 }
 
+var (
+	highQuality    bool
+	mediumQuality  bool
+	lowQuality     bool
+	packageQuality bool
+
+	snapshotLowQuality  bool
+	snapshotJPEGQuality int
+)
+
+var qualitiesFlagSet = pflag.NewFlagSet("qualities", pflag.ExitOnError)
+
 func init() {
+	qualitiesFlagSet.BoolVar(&highQuality, "high", false, "high stream quality")
+	qualitiesFlagSet.BoolVar(&mediumQuality, "medium", false, "medium stream quality")
+	qualitiesFlagSet.BoolVar(&lowQuality, "low", false, "low stream quality")
+	qualitiesFlagSet.BoolVar(&packageQuality, "package", false, "package stream quality")
+
 	protectCmd.AddCommand(protectInfoCmd)
 	protectCmd.AddCommand(camerasCmd)
 	protectCmd.AddCommand(subscribeCmd)
@@ -44,6 +63,20 @@ func init() {
 	cameraListCmd.Flags().AddFlagSet(listingFlagSet)
 	camerasCmd.AddCommand(cameraListCmd)
 	camerasCmd.AddCommand(cameraDetailsCmd)
+	camerasCmd.AddCommand(cameraPatchCmd)
+
+	cameraGetSnapshotCmd.Flags().BoolVar(&snapshotLowQuality, "low-quality", false, "snapshot low quality")
+	cameraGetSnapshotCmd.Flags().IntVar(&snapshotJPEGQuality, "jpeg-quality", 100, "JPEG Quality from 1 to 100")
+	camerasCmd.AddCommand(cameraGetSnapshotCmd)
+
+	// TODO: Should this be a sub-command of a new rtspstream command?
+	cameraRTSPSStreamCreateCmd.Flags().AddFlagSet(qualitiesFlagSet)
+	camerasCmd.AddCommand(cameraRTSPSStreamCreateCmd)
+	cameraRTSPSStreamDeleteCmd.Flags().AddFlagSet(qualitiesFlagSet)
+	camerasCmd.AddCommand(cameraRTSPSStreamDeleteCmd)
+	camerasCmd.AddCommand(cameraRTSPSStreamGetCmd)
+	camerasCmd.AddCommand(cameraDisableMicPermanentlyCmd)
+	camerasCmd.AddCommand(cameraTalkbackSessionCmd)
 }
 
 var protectCmd = &cobra.Command{
@@ -227,6 +260,189 @@ var cameraDetailsCmd = &cobra.Command{
 			return
 		}
 		err = marshalAndPrintJSON(camera)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraPatchCmd = &cobra.Command{
+	Use:   "patch [camera ID] [camera JSON filename]",
+	Short: "Patch the configuration of an existing camera",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		var cameraReq types.CameraPatchRequest
+		err = json.Unmarshal(data, &cameraReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		c := getClient()
+		modifiedCamera, err := c.Protect.CameraPatch(types.CameraID(args[0]), &cameraReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(modifiedCamera)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraGetSnapshotCmd = &cobra.Command{
+	Use:   "snapshot [camera ID] [filename]",
+	Short: "Get a live snapshot image from a specified camera and save it to a file",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		if snapshotJPEGQuality < 1 || snapshotJPEGQuality > 100 {
+			log.Errorf("--jpeg-quality must be between 1 and 100, got '%d'", snapshotJPEGQuality)
+			return
+		}
+
+		c := getClient()
+		image, err := c.Protect.CameraGetSnapshot(types.CameraID(args[0]), !snapshotLowQuality)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		outfile, err := os.Create(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		err = jpeg.Encode(outfile, image, &jpeg.Options{Quality: snapshotJPEGQuality})
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		log.WithFields(logrus.Fields{
+			"filename": args[1],
+		}).Infof("Saved snapshot to file")
+	},
+}
+
+func qualities() []string {
+	quals := make([]string, 0, 4)
+	if lowQuality {
+		quals = append(quals, "low")
+	}
+	if mediumQuality {
+		quals = append(quals, "medium")
+	}
+	if highQuality {
+		quals = append(quals, "high")
+	}
+	if packageQuality {
+		quals = append(quals, "package")
+	}
+	return quals
+}
+
+var cameraRTSPSStreamCreateCmd = &cobra.Command{
+	Use:   "stream-create [camera ID]",
+	Short: "Create RTSPS stream(s), based on qualities specified, for a camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		resp, err := c.Protect.CameraCreateRTSPSStream(
+			types.CameraID(args[0]),
+			&types.CameraCreateRTSPSStreamRequest{Qualities: qualities()},
+		)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		err = marshalAndPrintJSON(resp)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraRTSPSStreamDeleteCmd = &cobra.Command{
+	Use:   "stream-delete [camera ID]",
+	Short: "Delete RTSPS stream(s), based on qualities specified, for a camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		err := c.Protect.CameraDeleteRTSPSStream(types.CameraID(args[0]), &types.CameraDeleteRTSPSStreamRequest{
+			Qualities: qualities(),
+		})
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		log.Info("204 - No Content - OK")
+	},
+}
+
+var cameraRTSPSStreamGetCmd = &cobra.Command{
+	Use:   "stream-get [camera ID]",
+	Short: "Get RTSPS streams that exist for a camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		resp, err := c.Protect.CameraGetRTSPSStream(types.CameraID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		err = marshalAndPrintJSON(resp)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraDisableMicPermanentlyCmd = &cobra.Command{
+	Use:   "disable-mic-permanently [camera ID]",
+	Short: "Permanently disable the microphone for a specific camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		camera, err := c.Protect.CameraDisableMicPermanently(types.CameraID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(camera)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var cameraTalkbackSessionCmd = &cobra.Command{
+	Use:   "talkback-session [camera ID]",
+	Short: "Get the talkback stream URL and audio config for a camera",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		cameraTalkbackResp, err := c.Protect.CameraTalkbackSession(types.CameraID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(cameraTalkbackResp)
 		if err != nil {
 			log.Error(err.Error())
 			return
