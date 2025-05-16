@@ -7,7 +7,6 @@ import (
 	"image/jpeg"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/coder/websocket"
 	"github.com/sirupsen/logrus"
@@ -347,7 +346,9 @@ func (pc *protectV1Client) CameraDeleteRTSPSStream(
 	req *types.CameraDeleteRTSPSStreamRequest,
 ) error {
 	query := &url.Values{}
-	query.Add("qualities", strings.Join(req.Qualities, ","))
+	for _, qual := range req.Qualities {
+		query.Add("qualities[]", qual)
+	}
 
 	_, err := pc.client.doRequest(&requestArgs{
 		Endpoint:     protectAPI["CameraDeleteRTSPSStream"],

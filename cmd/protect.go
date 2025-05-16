@@ -8,6 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/ClifHouck/unified/types"
 )
@@ -16,7 +17,21 @@ var viewerSettingsReq = &types.ViewerSettingsRequest{
 	Name: "string",
 }
 
+var (
+	highQuality    bool
+	mediumQuality  bool
+	lowQuality     bool
+	packageQuality bool
+)
+
+var qualitiesFlagSet = pflag.NewFlagSet("qualities", pflag.ExitOnError)
+
 func init() {
+	qualitiesFlagSet.BoolVar(&highQuality, "high", false, "high quality")
+	qualitiesFlagSet.BoolVar(&mediumQuality, "medium", false, "medium quality")
+	qualitiesFlagSet.BoolVar(&lowQuality, "low", false, "low quality")
+	qualitiesFlagSet.BoolVar(&packageQuality, "package", false, "package quality")
+
 	protectCmd.AddCommand(protectInfoCmd)
 	protectCmd.AddCommand(camerasCmd)
 	protectCmd.AddCommand(subscribeCmd)
@@ -48,7 +63,9 @@ func init() {
 	camerasCmd.AddCommand(cameraPatchCmd)
 	camerasCmd.AddCommand(cameraGetSnapshotCmd)
 	// TODO: Should this be a sub-command of a new rtspstream command?
+	cameraRTSPSStreamCreateCmd.Flags().AddFlagSet(qualitiesFlagSet)
 	camerasCmd.AddCommand(cameraRTSPSStreamCreateCmd)
+	cameraRTSPSStreamDeleteCmd.Flags().AddFlagSet(qualitiesFlagSet)
 	camerasCmd.AddCommand(cameraRTSPSStreamDeleteCmd)
 	camerasCmd.AddCommand(cameraRTSPSStreamGetCmd)
 	camerasCmd.AddCommand(cameraDisableMicPermanentlyCmd)
@@ -307,15 +324,31 @@ var cameraGetSnapshotCmd = &cobra.Command{
 	},
 }
 
+func qualities() []string {
+	quals := make([]string, 0, 4)
+	if lowQuality {
+		quals = append(quals, "low")
+	}
+	if mediumQuality {
+		quals = append(quals, "medium")
+	}
+	if highQuality {
+		quals = append(quals, "high")
+	}
+	if packageQuality {
+		quals = append(quals, "package")
+	}
+	return quals
+}
+
 var cameraRTSPSStreamCreateCmd = &cobra.Command{
 	Use:   "stream-create [camera ID]",
 	Short: "Create RTSPS stream(s), based on qualities specified, for a camera",
 	Args:  cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		c := getClient()
-		// FIXME: Plumb qualities
 		resp, err := c.Protect.CameraCreateRTSPSStream(types.CameraID(args[0]), &types.CameraCreateRTSPSStreamRequest{
-			Qualities: []string{"high"},
+			Qualities: qualities(),
 		})
 		if err != nil {
 			log.Error(err.Error())
@@ -336,9 +369,8 @@ var cameraRTSPSStreamDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		c := getClient()
-		// FIXME: Plumb qualities
 		err := c.Protect.CameraDeleteRTSPSStream(types.CameraID(args[0]), &types.CameraDeleteRTSPSStreamRequest{
-			Qualities: []string{"high"},
+			Qualities: qualities(),
 		})
 		if err != nil {
 			log.Error(err.Error())
