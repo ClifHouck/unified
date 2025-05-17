@@ -2,14 +2,13 @@ package integration_test
 
 import (
 	"bytes"
-	"image/jpeg"
 	"fmt"
+	"image/jpeg"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
 
-	//"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +23,7 @@ func checkForUniFiProtectAPIHostSkip(t *testing.T) {
 type TestProtectIDSet struct {
 	CameraID   string
 	LiveviewID string
-	//ViewerID   string TODO I don't have any viewers...
+	// ViewerID   string TODO I don't have any viewers...
 }
 
 func helperSeedProtectIDValues(t *testing.T) *TestProtectIDSet {
@@ -101,17 +100,17 @@ func TestUnifiedCmdProtectGETCommands(t *testing.T) {
 			Name:    "Test 'protect cameras snapshot'",
 			Command: []string{"protect", "cameras", "snapshot", idSet.CameraID, "/tmp/unified/test_snapshot.jpg"},
 			AfterCommand: func(t *testing.T) error {
-				// Try loading the image 
-				data, err := os.ReadFile("/tmp/unified/test_snapshot.jpg")
-				require.NoError(t, err)
+				// Try loading the image
+				data, acErr := os.ReadFile("/tmp/unified/test_snapshot.jpg")
+				require.NoError(t, acErr)
 
 				reader := bytes.NewReader(data)
-				_, err = jpeg.Decode(reader)
-				require.NoError(t, err)
+				_, acErr = jpeg.Decode(reader)
+				require.NoError(t, acErr)
 
 				// Then remove it.
 				err = os.Remove("/tmp/unified/test_snapshot.jpg")
-				require.NoError(t, err)
+				require.NoError(t, acErr)
 				return nil
 			},
 		},
@@ -130,12 +129,12 @@ func TestUnifiedCmdProtectGETCommands(t *testing.T) {
 			fmt.Println("Running Command: '" + strings.Join(fullCmd, " ") + "'")
 
 			cmd := exec.Command(unifiedBinary, tc.Command...)
-			output, err := cmd.Output()
-			require.NoError(t, err)
+			output, tcErr := cmd.Output()
+			require.NoError(t, tcErr)
 			fmt.Print(string(output))
 			if tc.AfterCommand != nil {
-				err := tc.AfterCommand(t)
-				require.NoError(t, err)
+				acErr := tc.AfterCommand(t)
+				require.NoError(t, acErr)
 			}
 		})
 	}
