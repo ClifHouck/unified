@@ -208,13 +208,16 @@ verification by default before a full v1.0.0 release.
 
 UniFi Network API V1 is fully supported as of Network application version "9.1.120".
 
-UniFi Protect API is only partially supported, with the following endpoints supported:
+UniFi Protect API is partially supported, with the following endpoints supported:
 
 - `/v1/meta/info`
+- All `/v1/cameras` endpoints.
+- All `/v1/viewers` endpints.
+- All `/v1/liveviews` endpoints.
 - `/v1/subscribe/devices`: only partial type support.
 - `/v1/subscribe/events`
-- `/v1/cameras/`
-- `/v1/cameras/{id}`
+
+The rest of the Protect API is TODO, but coming shortly.
 
 UniFi Access API is not yet supported.
 
