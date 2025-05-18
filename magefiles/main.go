@@ -10,6 +10,9 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"github.com/magefile/mage/target"
+	"github.com/spf13/cobra/doc"
+
+	"github.com/ClifHouck/unified/cmd"
 )
 
 const GENERATE_STREAM_HANDLERS_BINARY = "./tools/generators/bin/generate_stream_handlers"
@@ -261,6 +264,33 @@ func Lint() error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// Generate docs for the CLI command
+func GenerateCLICommandDocs() error {
+	dest := "./docs/cmd/"
+	sources := "./cmd/*.go"
+	logger := log.WithFields(log.Fields{
+		"destination": dest,
+		"sources": sources,
+	})
+
+	outOfDate, err := target.Glob(dest, sources)
+	if err != nil {
+		return err
+	}
+
+	if outOfDate {
+		rootCmd := cmd.RootCmd()
+		err = doc.GenMarkdownTree(rootCmd, dest)
+		if err != nil {
+			return err
+		}
+		logger.Info("Generated `unified` CLI command documentation.")
+	} else {
+		logger.Info("`unified` CLI command documentation up to date.")
 	}
 	return nil
 }
