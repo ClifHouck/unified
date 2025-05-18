@@ -62,9 +62,6 @@ func getClient() *client.Client {
 }
 
 func Execute() {
-	rootCmd.AddCommand(networkCmd)
-	rootCmd.AddCommand(protectCmd)
-
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -90,6 +87,9 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Enable debug logging")
 	rootCmd.PersistentFlags().BoolVar(&traceLogging, "trace", false, "Enable trace logging")
+
+	rootCmd.AddCommand(networkCmd)
+	rootCmd.AddCommand(protectCmd)
 
 	cobra.OnInitialize(configureLog)
 	cobra.OnInitialize(initConfig)
@@ -213,4 +213,8 @@ func configureLog() {
 	if traceLogging {
 		log.SetLevel(logrus.TraceLevel)
 	}
+}
+
+func RootCmd() *cobra.Command {
+	return rootCmd
 }
