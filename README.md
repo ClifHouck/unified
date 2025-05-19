@@ -216,6 +216,7 @@ UniFi Protect API is partially supported, with the following endpoints supported
 - All `/v1/cameras` endpoints.
 - All `/v1/viewers` endpints.
 - All `/v1/liveviews` endpoints.
+- All `/v1/lights` endpoints.
 - `/v1/subscribe/devices`: only partial type support.
 - `/v1/subscribe/events`
 
