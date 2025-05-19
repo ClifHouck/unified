@@ -72,6 +72,8 @@ func init() {
 	ctx = context.Background()
 	log = logrus.New()
 
+	rootCmd.DisableAutoGenTag = true
+
 	// Config file.
 	rootCmd.PersistentFlags().
 		StringVar(&cfgFile, "config", "", "config file (default is $HOME/.unified.yaml)")

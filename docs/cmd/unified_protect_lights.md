@@ -1,15 +1,15 @@
-## unified protect cameras stream-get
+## unified protect lights
 
-Get RTSPS streams that exist for a camera
+Make UniFi Protect `lights` calls
 
-```
-unified protect cameras stream-get [camera ID] [flags]
-```
+### Synopsis
+
+Call camera endpoints under UniFi Protect's API.
 
 ### Options
 
 ```
-  -h, --help   help for stream-get
+  -h, --help   help for lights
 ```
 
 ### Options inherited from parent commands
@@ -25,5 +25,8 @@ unified protect cameras stream-get [camera ID] [flags]
 
 ### SEE ALSO
 
-* [unified protect cameras](unified_protect_cameras.md)	 - Make UniFi Protect `cameras` calls
+* [unified protect](unified_protect.md)	 - Make UniFi Protect API calls
+* [unified protect lights details](unified_protect_lights_details.md)	 - Get detailed information about a specific adopted device
+* [unified protect lights list](unified_protect_lights_list.md)	 - List adopted Protect lights
+* [unified protect lights patch](unified_protect_lights_patch.md)	 - Patch the configuration of an existing light
 

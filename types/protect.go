@@ -38,6 +38,11 @@ type ProtectV1 interface {
 	CameraDisableMicPermanently(CameraID) (*Camera, error)
 	CameraTalkbackSession(CameraID) (*CameraTalkbackSessionResponse, error)
 
+	// Lights
+	Lights() ([]*Light, error)
+	LightDetails(LightID) (*Light, error)
+	LightPatch(LightID, *LightPatchRequest) (*Light, error)
+
 	// TODO: Rest of protect API!
 }
 
@@ -47,6 +52,8 @@ type CameraID string
 type ViewerID string
 
 type LiveViewID string
+
+type LightID string
 
 type ProtectInfo struct {
 	ApplicationVersion string `json:"applicationVersion"`
@@ -188,4 +195,42 @@ type CameraTalkbackSessionResponse struct {
 	Codec         string `json:"codec"`
 	SamplingRate  int    `json:"samplingRate"`
 	BitsPerSample int    `json:"bitsPerSample"`
+}
+
+type Light struct {
+	ID                string `json:"id"`
+	ModelKey          string `json:"modelKey"`
+	State             string `json:"state"`
+	Name              string `json:"name"`
+	LightModeSettings struct {
+		Mode     string `json:"mode"`
+		EnableAt string `json:"enableAt"`
+	} `json:"lightModeSettings"`
+	LightDeviceSettings struct {
+		IsIndicatorEnabled bool `json:"isIndicatorEnabled"`
+		PirDuration        int  `json:"pirDuration"`
+		PirSensitivity     int  `json:"pirSensitivity"`
+		LedLevel           int  `json:"ledLevel"`
+	} `json:"lightDeviceSettings"`
+	IsDark              bool   `json:"isDark"`
+	IsLightOn           bool   `json:"isLightOn"`
+	IsLightForceEnabled bool   `json:"isLightForceEnabled"`
+	LastMotion          int    `json:"lastMotion"`
+	IsPirMotionDetected bool   `json:"isPirMotionDetected"`
+	Camera              string `json:"camera"`
+}
+
+type LightPatchRequest struct {
+	Name                string `json:"name,omitempty"`
+	IsLightForceEnabled bool   `json:"isLightForceEnabled,omitempty"`
+	LightModeSettings   struct {
+		Mode     string `json:"mode,omitempty"`
+		EnableAt string `json:"enableAt,omitempty"`
+	} `json:"lightModeSettings,omitzero"`
+	LightDeviceSettings struct {
+		IsIndicatorEnabled bool `json:"isIndicatorEnabled,omitempty"`
+		PirDuration        int  `json:"pirDuration,omitempty"`
+		PirSensitivity     int  `json:"pirSensitivity,omitempty"`
+		LedLevel           int  `json:"ledLevel,omitempty"`
+	} `json:"lightDeviceSettings,omitzero"`
 }

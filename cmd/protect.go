@@ -40,6 +40,7 @@ func init() {
 	protectCmd.AddCommand(subscribeCmd)
 	protectCmd.AddCommand(viewersCmd)
 	protectCmd.AddCommand(liveViewsCmd)
+	protectCmd.AddCommand(lightsCmd)
 
 	// Subscriptions
 	subscribeCmd.AddCommand(deviceEventsCmd)
@@ -77,6 +78,12 @@ func init() {
 	camerasCmd.AddCommand(cameraRTSPSStreamGetCmd)
 	camerasCmd.AddCommand(cameraDisableMicPermanentlyCmd)
 	camerasCmd.AddCommand(cameraTalkbackSessionCmd)
+
+	// Lights
+	lightListCmd.Flags().AddFlagSet(listingFlagSet)
+	lightsCmd.AddCommand(lightListCmd)
+	lightsCmd.AddCommand(lightDetailsCmd)
+	lightsCmd.AddCommand(lightPatchCmd)
 }
 
 var protectCmd = &cobra.Command{
@@ -101,6 +108,12 @@ var liveViewsCmd = &cobra.Command{
 	Use:   "liveviews",
 	Short: "Make UniFi Protect `liveviews` calls",
 	Long:  `Call liveview endpoints under UniFi Protect's API.`,
+}
+
+var lightsCmd = &cobra.Command{
+	Use:   "lights",
+	Short: "Make UniFi Protect `lights` calls",
+	Long:  `Call camera endpoints under UniFi Protect's API.`,
 }
 
 var subscribeCmd = &cobra.Command{
@@ -616,6 +629,83 @@ var liveViewPatchCmd = &cobra.Command{
 			return
 		}
 		err = marshalAndPrintJSON(modifiedLiveView)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var lightListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List adopted Protect lights",
+	Run: func(_ *cobra.Command, _ []string) {
+		c := getClient()
+		lights, err := c.Protect.Lights()
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		if idOnly {
+			for _, light := range lights {
+				if idOnly {
+					fmt.Println(light.ID)
+				}
+			}
+		} else {
+			err = marshalAndPrintJSON(lights)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
+		}
+	},
+}
+
+var lightDetailsCmd = &cobra.Command{
+	Use:   "details [light ID]",
+	Short: "Get detailed information about a specific adopted device",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		light, err := c.Protect.LightDetails(types.LightID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(light)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var lightPatchCmd = &cobra.Command{
+	Use:   "patch [light ID] [light JSON filename]",
+	Short: "Patch the configuration of an existing light",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		var lightReq types.LightPatchRequest
+		err = json.Unmarshal(data, &lightReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		c := getClient()
+		modifiedlight, err := c.Protect.LightPatch(types.LightID(args[0]), &lightReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(modifiedlight)
 		if err != nil {
 			log.Error(err.Error())
 			return
