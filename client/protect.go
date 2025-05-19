@@ -151,6 +151,27 @@ var protectAPI = map[string]*apiEndpoint{
 		HasRequestBody: true,
 		NumURLArgs:     1,
 	},
+	"Lights": {
+		URLFragment: "lights",
+		Method:      http.MethodGet,
+		Description: "Get all lights",
+		Application: "protect",
+	},
+	"LightDetails": {
+		URLFragment: "lights/%s",
+		Method:      http.MethodGet,
+		Description: "Get light details",
+		Application: "protect",
+		NumURLArgs:  1,
+	},
+	"LightPatch": {
+		URLFragment:    "lights/%s",
+		Method:         http.MethodPatch,
+		Description:    "Patch the settings for a specific light",
+		Application:    "protect",
+		NumURLArgs:     1,
+		HasRequestBody: true,
+	},
 }
 
 type protectV1Client struct {
@@ -687,4 +708,72 @@ func (pc *protectV1Client) LiveViewPatch(
 	}
 
 	return liveView, nil
+}
+
+func (pc *protectV1Client) Lights() ([]*types.Light, error) {
+	body, err := pc.client.doRequest(&requestArgs{Endpoint: protectAPI["Lights"]})
+	if err != nil {
+		return nil, err
+	}
+
+	var lights []*types.Light
+
+	err = json.Unmarshal(body, &lights)
+	if err != nil {
+		return nil, err
+	}
+
+	return lights, nil
+}
+
+func (pc *protectV1Client) LightDetails(lightID types.LightID) (*types.Light, error) {
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["LightDetails"],
+		URLArguments: []any{lightID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var light *types.Light
+
+	err = json.Unmarshal(body, &light)
+	if err != nil {
+		return nil, err
+	}
+
+	return light, nil
+}
+
+func (pc *protectV1Client) LightPatch(
+	lightID types.LightID,
+	light *types.LightPatchRequest,
+) (*types.Light, error) {
+	jsonBody, err := json.Marshal(light)
+	pc.client.log.WithFields(logrus.Fields{
+		"method": "LightPatch",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return nil, err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["LightPatch"],
+		URLArguments: []any{lightID},
+		RequestBody:  bodyReader,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedLight *types.Light
+
+	err = json.Unmarshal(body, &updatedLight)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedLight, nil
 }
