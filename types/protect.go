@@ -46,6 +46,11 @@ type ProtectV1 interface {
 	// NVRs
 	NVRs() (*NVR, error)
 
+	// Chimes
+	Chimes() ([]*Chime, error)
+	ChimeDetails(ChimeID) (*Chime, error)
+	ChimePatch(ChimeID, *ChimePatchRequest) (*Chime, error)
+
 	// TODO: Rest of protect API!
 }
 
@@ -57,6 +62,8 @@ type ViewerID string
 type LiveViewID string
 
 type LightID string
+
+type ChimeID string
 
 type ProtectInfo struct {
 	ApplicationVersion string `json:"applicationVersion"`
@@ -251,4 +258,29 @@ type NVR struct {
 			Sprite  string `json:"sprite"`
 		} `json:"customImages"`
 	} `json:"doorbellSettings"`
+}
+
+type Chime struct {
+	ID           string   `json:"id"`
+	ModelKey     string   `json:"modelKey"`
+	State        string   `json:"state"`
+	Name         string   `json:"name"`
+	CameraIDs    []string `json:"cameraIds"`
+	RingSettings []struct {
+		CameraID    string `json:"cameraId"`
+		RepeatTimes int    `json:"repeatTimes"`
+		RingtoneID  string `json:"ringtoneId"`
+		Volume      int    `json:"volume"`
+	} `json:"ringSettings"`
+}
+
+type ChimePatchRequest struct {
+	Name         string   `json:"name,omitempty"`
+	CameraIDs    []string `json:"cameraIds,omitempty"`
+	RingSettings []struct {
+		CameraID    string `json:"cameraId,omitempty"`
+		RepeatTimes int    `json:"repeatTimes,omitempty"`
+		RingtoneID  string `json:"ringtoneId,omitempty"`
+		Volume      int    `json:"volume,omitempty"`
+	} `json:"ringSettings,omitzero"`
 }

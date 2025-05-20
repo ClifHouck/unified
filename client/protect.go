@@ -178,6 +178,27 @@ var protectAPI = map[string]*apiEndpoint{
 		Description: "Get detailed information about the NVR",
 		Application: "protect",
 	},
+	"Chimes": {
+		URLFragment: "chimes",
+		Method:      http.MethodGet,
+		Description: "Get all chimes",
+		Application: "protect",
+	},
+	"ChimeDetails": {
+		URLFragment: "chimes/%s",
+		Method:      http.MethodGet,
+		Description: "Get chime details",
+		Application: "protect",
+		NumURLArgs:  1,
+	},
+	"ChimePatch": {
+		URLFragment:    "chimes/%s",
+		Method:         http.MethodPatch,
+		Description:    "Patch the settings for a specific chime",
+		Application:    "protect",
+		NumURLArgs:     1,
+		HasRequestBody: true,
+	},
 }
 
 type protectV1Client struct {
@@ -798,4 +819,72 @@ func (pc *protectV1Client) NVRs() (*types.NVR, error) {
 	}
 
 	return nvr, nil
+}
+
+func (pc *protectV1Client) Chimes() ([]*types.Chime, error) {
+	body, err := pc.client.doRequest(&requestArgs{Endpoint: protectAPI["Chimes"]})
+	if err != nil {
+		return nil, err
+	}
+
+	var chimes []*types.Chime
+
+	err = json.Unmarshal(body, &chimes)
+	if err != nil {
+		return nil, err
+	}
+
+	return chimes, nil
+}
+
+func (pc *protectV1Client) ChimeDetails(chimeID types.ChimeID) (*types.Chime, error) {
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["ChimeDetails"],
+		URLArguments: []any{chimeID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var chime *types.Chime
+
+	err = json.Unmarshal(body, &chime)
+	if err != nil {
+		return nil, err
+	}
+
+	return chime, nil
+}
+
+func (pc *protectV1Client) ChimePatch(
+	chimeID types.ChimeID,
+	chime *types.ChimePatchRequest,
+) (*types.Chime, error) {
+	jsonBody, err := json.Marshal(chime)
+	pc.client.log.WithFields(logrus.Fields{
+		"method": "ChimePatch",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return nil, err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["ChimePatch"],
+		URLArguments: []any{chimeID},
+		RequestBody:  bodyReader,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedChime *types.Chime
+
+	err = json.Unmarshal(body, &updatedChime)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedChime, nil
 }
