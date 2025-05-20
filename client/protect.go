@@ -172,6 +172,12 @@ var protectAPI = map[string]*apiEndpoint{
 		NumURLArgs:     1,
 		HasRequestBody: true,
 	},
+	"NVRs": {
+		URLFragment: "nvrs",
+		Method:      http.MethodGet,
+		Description: "Get detailed information about the NVR",
+		Application: "protect",
+	},
 }
 
 type protectV1Client struct {
@@ -776,4 +782,20 @@ func (pc *protectV1Client) LightPatch(
 	}
 
 	return updatedLight, nil
+}
+
+func (pc *protectV1Client) NVRs() (*types.NVR, error) {
+	body, err := pc.client.doRequest(&requestArgs{Endpoint: protectAPI["NVRs"]})
+	if err != nil {
+		return nil, err
+	}
+
+	var nvr *types.NVR
+
+	err = json.Unmarshal(body, &nvr)
+	if err != nil {
+		return nil, err
+	}
+
+	return nvr, nil
 }
