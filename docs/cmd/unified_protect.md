@@ -27,6 +27,7 @@ Complete access to UniFi's Protect API from the command line
 
 * [unified](unified.md)	 - Make UniFi Network or Protect API calls
 * [unified protect cameras](unified_protect_cameras.md)	 - Make UniFi Protect `cameras` calls
+* [unified protect chimes](unified_protect_chimes.md)	 - Make UniFi Protect `chimes` calls
 * [unified protect info](unified_protect_info.md)	 - Get protect application info
 * [unified protect lights](unified_protect_lights.md)	 - Make UniFi Protect `lights` calls
 * [unified protect liveviews](unified_protect_liveviews.md)	 - Make UniFi Protect `liveviews` calls

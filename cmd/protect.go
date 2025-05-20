@@ -42,6 +42,7 @@ func init() {
 	protectCmd.AddCommand(liveViewsCmd)
 	protectCmd.AddCommand(lightsCmd)
 	protectCmd.AddCommand(nvrCmd)
+	protectCmd.AddCommand(chimesCmd)
 
 	// Subscriptions
 	subscribeCmd.AddCommand(deviceEventsCmd)
@@ -85,6 +86,12 @@ func init() {
 	lightsCmd.AddCommand(lightListCmd)
 	lightsCmd.AddCommand(lightDetailsCmd)
 	lightsCmd.AddCommand(lightPatchCmd)
+
+	// Chimes
+	chimeListCmd.Flags().AddFlagSet(listingFlagSet)
+	chimesCmd.AddCommand(chimeListCmd)
+	chimesCmd.AddCommand(chimeDetailsCmd)
+	chimesCmd.AddCommand(chimePatchCmd)
 }
 
 var protectCmd = &cobra.Command{
@@ -115,6 +122,12 @@ var lightsCmd = &cobra.Command{
 	Use:   "lights",
 	Short: "Make UniFi Protect `lights` calls",
 	Long:  `Call camera endpoints under UniFi Protect's API.`,
+}
+
+var chimesCmd = &cobra.Command{
+	Use:   "chimes",
+	Short: "Make UniFi Protect `chimes` calls",
+	Long:  `Call chimes endpoints under UniFi Protect's API.`,
 }
 
 var subscribeCmd = &cobra.Command{
@@ -725,6 +738,83 @@ var nvrCmd = &cobra.Command{
 			return
 		}
 		err = marshalAndPrintJSON(nvr)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var chimeListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List adopted Protect chimes",
+	Run: func(_ *cobra.Command, _ []string) {
+		c := getClient()
+		chimes, err := c.Protect.Chimes()
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		if idOnly {
+			for _, chime := range chimes {
+				if idOnly {
+					fmt.Println(chime.ID)
+				}
+			}
+		} else {
+			err = marshalAndPrintJSON(chimes)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
+		}
+	},
+}
+
+var chimeDetailsCmd = &cobra.Command{
+	Use:   "details [chime ID]",
+	Short: "Get detailed information about a specific adopted device",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		chime, err := c.Protect.ChimeDetails(types.ChimeID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(chime)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var chimePatchCmd = &cobra.Command{
+	Use:   "patch [chime ID] [chime JSON filename]",
+	Short: "Patch the configuration of an existing chime",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		var chimeReq types.ChimePatchRequest
+		err = json.Unmarshal(data, &chimeReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		c := getClient()
+		modifiedchime, err := c.Protect.ChimePatch(types.ChimeID(args[0]), &chimeReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(modifiedchime)
 		if err != nil {
 			log.Error(err.Error())
 			return
