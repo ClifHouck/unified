@@ -41,6 +41,7 @@ func init() {
 	protectCmd.AddCommand(viewersCmd)
 	protectCmd.AddCommand(liveViewsCmd)
 	protectCmd.AddCommand(lightsCmd)
+	protectCmd.AddCommand(nvrCmd)
 
 	// Subscriptions
 	subscribeCmd.AddCommand(deviceEventsCmd)
@@ -706,6 +707,24 @@ var lightPatchCmd = &cobra.Command{
 			return
 		}
 		err = marshalAndPrintJSON(modifiedlight)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var nvrCmd = &cobra.Command{
+	Use:   "nvrs",
+	Short: "Get information about the NVR",
+	Run: func(_ *cobra.Command, _ []string) {
+		c := getClient()
+		nvr, err := c.Protect.NVRs()
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(nvr)
 		if err != nil {
 			log.Error(err.Error())
 			return

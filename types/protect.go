@@ -43,6 +43,9 @@ type ProtectV1 interface {
 	LightDetails(LightID) (*Light, error)
 	LightPatch(LightID, *LightPatchRequest) (*Light, error)
 
+	// NVRs
+	NVRs() (*NVR, error)
+
 	// TODO: Rest of protect API!
 }
 
@@ -233,4 +236,19 @@ type LightPatchRequest struct {
 		PirSensitivity     int  `json:"pirSensitivity,omitempty"`
 		LedLevel           int  `json:"ledLevel,omitempty"`
 	} `json:"lightDeviceSettings,omitzero"`
+}
+
+type NVR struct {
+	ID               string `json:"id"`
+	ModelKey         string `json:"modelKey"`
+	Name             string `json:"name"`
+	DoorbellSettings struct {
+		DefaultMessageText           string   `json:"defaultMessageText"`
+		DefaultMessageResetTimeoutMs int      `json:"defaultMessageResetTimeoutMs"`
+		CustomMessages               []string `json:"customMessages"`
+		CustomImages                 []struct {
+			Preview string `json:"preview"`
+			Sprite  string `json:"sprite"`
+		} `json:"customImages"`
+	} `json:"doorbellSettings"`
 }
