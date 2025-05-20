@@ -46,7 +46,7 @@ type ProtectV1 interface {
 	// NVRs
 	NVRs() (*NVR, error)
 
-	// Chimes 
+	// Chimes
 	Chimes() ([]*Chime, error)
 	ChimeDetails(ChimeID) (*Chime, error)
 	ChimePatch(ChimeID, *ChimePatchRequest) (*Chime, error)
@@ -265,7 +265,7 @@ type Chime struct {
 	ModelKey     string   `json:"modelKey"`
 	State        string   `json:"state"`
 	Name         string   `json:"name"`
-	CameraIds    []string `json:"cameraIds"`
+	CameraIDs    []string `json:"cameraIds"`
 	RingSettings []struct {
 		CameraID    string `json:"cameraId"`
 		RepeatTimes int    `json:"repeatTimes"`
@@ -276,7 +276,7 @@ type Chime struct {
 
 type ChimePatchRequest struct {
 	Name         string   `json:"name,omitempty"`
-	CameraIds    []string `json:"cameraIds,omitempty"`
+	CameraIDs    []string `json:"cameraIds,omitempty"`
 	RingSettings []struct {
 		CameraID    string `json:"cameraId,omitempty"`
 		RepeatTimes int    `json:"repeatTimes,omitempty"`
