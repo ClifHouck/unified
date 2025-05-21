@@ -199,6 +199,27 @@ var protectAPI = map[string]*apiEndpoint{
 		NumURLArgs:     1,
 		HasRequestBody: true,
 	},
+	"Sensors": {
+		URLFragment: "sensors",
+		Method:      http.MethodGet,
+		Description: "Get all sensors",
+		Application: "protect",
+	},
+	"SensorDetails": {
+		URLFragment: "sensors/%s",
+		Method:      http.MethodGet,
+		Description: "Get sensor details",
+		Application: "protect",
+		NumURLArgs:  1,
+	},
+	"SensorPatch": {
+		URLFragment:    "sensors/%s",
+		Method:         http.MethodPatch,
+		Description:    "Patch the settings for a specific sensor",
+		Application:    "protect",
+		NumURLArgs:     1,
+		HasRequestBody: true,
+	},
 }
 
 type protectV1Client struct {
@@ -887,4 +908,72 @@ func (pc *protectV1Client) ChimePatch(
 	}
 
 	return updatedChime, nil
+}
+
+func (pc *protectV1Client) Sensors() ([]*types.Sensor, error) {
+	body, err := pc.client.doRequest(&requestArgs{Endpoint: protectAPI["Sensors"]})
+	if err != nil {
+		return nil, err
+	}
+
+	var sensors []*types.Sensor
+
+	err = json.Unmarshal(body, &sensors)
+	if err != nil {
+		return nil, err
+	}
+
+	return sensors, nil
+}
+
+func (pc *protectV1Client) SensorDetails(sensorID types.SensorID) (*types.Sensor, error) {
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["SensorDetails"],
+		URLArguments: []any{sensorID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var sensor *types.Sensor
+
+	err = json.Unmarshal(body, &sensor)
+	if err != nil {
+		return nil, err
+	}
+
+	return sensor, nil
+}
+
+func (pc *protectV1Client) SensorPatch(
+	sensorID types.SensorID,
+	sensor *types.SensorPatchRequest,
+) (*types.Sensor, error) {
+	jsonBody, err := json.Marshal(sensor)
+	pc.client.log.WithFields(logrus.Fields{
+		"method": "SensorPatch",
+		"body":   string(jsonBody),
+	}).Trace("Request body")
+	if err != nil {
+		return nil, err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+	body, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["SensorPatch"],
+		URLArguments: []any{sensorID},
+		RequestBody:  bodyReader,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedSensor *types.Sensor
+
+	err = json.Unmarshal(body, &updatedSensor)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedSensor, nil
 }

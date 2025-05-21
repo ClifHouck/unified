@@ -51,6 +51,11 @@ type ProtectV1 interface {
 	ChimeDetails(ChimeID) (*Chime, error)
 	ChimePatch(ChimeID, *ChimePatchRequest) (*Chime, error)
 
+	// Sensors
+	Sensors() ([]*Sensor, error)
+	SensorDetails(SensorID) (*Sensor, error)
+	SensorPatch(SensorID, *SensorPatchRequest) (*Sensor, error)
+
 	// TODO: Rest of protect API!
 }
 
@@ -64,6 +69,8 @@ type LiveViewID string
 type LightID string
 
 type ChimeID string
+
+type SensorID string
 
 type ProtectInfo struct {
 	ApplicationVersion string `json:"applicationVersion"`
@@ -283,4 +290,91 @@ type ChimePatchRequest struct {
 		RingtoneID  string `json:"ringtoneId,omitempty"`
 		Volume      int    `json:"volume,omitempty"`
 	} `json:"ringSettings,omitzero"`
+}
+
+type Sensor struct {
+	ID            string `json:"id"`
+	ModelKey      string `json:"modelKey"`
+	State         string `json:"state"`
+	Name          string `json:"name"`
+	MountType     string `json:"mountType"`
+	BatteryStatus struct {
+		Percentage int  `json:"percentage"`
+		IsLow      bool `json:"isLow"`
+	} `json:"batteryStatus"`
+	Stats struct {
+		Light struct {
+			Value  int    `json:"value"`
+			Status string `json:"status"`
+		} `json:"light"`
+		Humidity struct {
+			Value  int    `json:"value"`
+			Status string `json:"status"`
+		} `json:"humidity"`
+		Temperature struct {
+			Value  int    `json:"value"`
+			Status string `json:"status"`
+		} `json:"temperature"`
+	} `json:"stats"`
+	LightSettings struct {
+		IsEnabled     bool `json:"isEnabled"`
+		Margin        int  `json:"margin"`
+		LowThreshold  int  `json:"lowThreshold"`
+		HighThreshold int  `json:"highThreshold"`
+	} `json:"lightSettings"`
+	HumiditySettings struct {
+		IsEnabled     bool `json:"isEnabled"`
+		Margin        int  `json:"margin"`
+		LowThreshold  int  `json:"lowThreshold"`
+		HighThreshold int  `json:"highThreshold"`
+	} `json:"humiditySettings"`
+	TemperatureSettings struct {
+		IsEnabled     bool `json:"isEnabled"`
+		Margin        int  `json:"margin"`
+		LowThreshold  int  `json:"lowThreshold"`
+		HighThreshold int  `json:"highThreshold"`
+	} `json:"temperatureSettings"`
+	IsOpened            bool `json:"isOpened"`
+	OpenStatusChangedAt int  `json:"openStatusChangedAt"`
+	IsMotionDetected    bool `json:"isMotionDetected"`
+	MotionDetectedAt    int  `json:"motionDetectedAt"`
+	MotionSettings      struct {
+		IsEnabled   bool `json:"isEnabled"`
+		Sensitivity int  `json:"sensitivity"`
+	} `json:"motionSettings"`
+	AlarmTriggeredAt int `json:"alarmTriggeredAt"`
+	AlarmSettings    struct {
+		IsEnabled bool `json:"isEnabled"`
+	} `json:"alarmSettings"`
+	LeakDetectedAt      int `json:"leakDetectedAt"`
+	TamperingDetectedAt int `json:"tamperingDetectedAt"`
+}
+
+type SensorPatchRequest struct {
+	Name          string `json:"name,omitempty"`
+	LightSettings struct {
+		IsEnabled     bool `json:"isEnabled,omitempty"`
+		Margin        int  `json:"margin,omitempty"`
+		LowThreshold  int  `json:"lowThreshold,omitempty"`
+		HighThreshold int  `json:"highThreshold,omitempty"`
+	} `json:"lightSettings,omitzero"`
+	HumiditySettings struct {
+		IsEnabled     bool `json:"isEnabled,omitempty"`
+		Margin        int  `json:"margin,omitempty"`
+		LowThreshold  int  `json:"lowThreshold,omitempty"`
+		HighThreshold int  `json:"highThreshold,omitempty"`
+	} `json:"humiditySettings,omitzero"`
+	TemperatureSettings struct {
+		IsEnabled     bool `json:"isEnabled,omitempty"`
+		Margin        int  `json:"margin,omitempty"`
+		LowThreshold  int  `json:"lowThreshold,omitempty"`
+		HighThreshold int  `json:"highThreshold,omitempty"`
+	} `json:"temperatureSettings,omitzero"`
+	MotionSettings struct {
+		IsEnabled   bool `json:"isEnabled,omitempty"`
+		Sensitivity int  `json:"sensitivity,omitempty"`
+	} `json:"motionSettings,omitzero"`
+	AlarmSettings struct {
+		IsEnabled bool `json:"isEnabled,omitempty"`
+	} `json:"alarmSettings,omitzero"`
 }

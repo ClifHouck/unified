@@ -32,6 +32,7 @@ Complete access to UniFi's Protect API from the command line
 * [unified protect lights](unified_protect_lights.md)	 - Make UniFi Protect `lights` calls
 * [unified protect liveviews](unified_protect_liveviews.md)	 - Make UniFi Protect `liveviews` calls
 * [unified protect nvrs](unified_protect_nvrs.md)	 - Get information about the NVR
+* [unified protect sensors](unified_protect_sensors.md)	 - Make UniFi Protect `sensors` calls
 * [unified protect subscribe](unified_protect_subscribe.md)	 - Make UniFi Protect `subscribe` calls
 * [unified protect viewers](unified_protect_viewers.md)	 - Make UniFi Protect `viewers` calls
 
