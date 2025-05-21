@@ -29,12 +29,8 @@ var (
 
 var qualitiesFlagSet = pflag.NewFlagSet("qualities", pflag.ExitOnError)
 
-func init() {
-	qualitiesFlagSet.BoolVar(&highQuality, "high", false, "high stream quality")
-	qualitiesFlagSet.BoolVar(&mediumQuality, "medium", false, "medium stream quality")
-	qualitiesFlagSet.BoolVar(&lowQuality, "low", false, "low stream quality")
-	qualitiesFlagSet.BoolVar(&packageQuality, "package", false, "package stream quality")
-
+func init() { //nolint:funlen
+	// Top level commands
 	protectCmd.AddCommand(protectInfoCmd)
 	protectCmd.AddCommand(camerasCmd)
 	protectCmd.AddCommand(subscribeCmd)
@@ -43,6 +39,7 @@ func init() {
 	protectCmd.AddCommand(lightsCmd)
 	protectCmd.AddCommand(nvrCmd)
 	protectCmd.AddCommand(chimesCmd)
+	protectCmd.AddCommand(sensorsCmd)
 
 	// Subscriptions
 	subscribeCmd.AddCommand(deviceEventsCmd)
@@ -72,7 +69,12 @@ func init() {
 	cameraGetSnapshotCmd.Flags().IntVar(&snapshotJPEGQuality, "jpeg-quality", 100, "JPEG Quality from 1 to 100")
 	camerasCmd.AddCommand(cameraGetSnapshotCmd)
 
-	// TODO: Should this be a sub-command of a new rtspstream command?
+	// TODO: Should RTSPS Streams related commands be a sub-command?
+	qualitiesFlagSet.BoolVar(&highQuality, "high", false, "high stream quality")
+	qualitiesFlagSet.BoolVar(&mediumQuality, "medium", false, "medium stream quality")
+	qualitiesFlagSet.BoolVar(&lowQuality, "low", false, "low stream quality")
+	qualitiesFlagSet.BoolVar(&packageQuality, "package", false, "package stream quality")
+
 	cameraRTSPSStreamCreateCmd.Flags().AddFlagSet(qualitiesFlagSet)
 	camerasCmd.AddCommand(cameraRTSPSStreamCreateCmd)
 	cameraRTSPSStreamDeleteCmd.Flags().AddFlagSet(qualitiesFlagSet)
@@ -92,6 +94,12 @@ func init() {
 	chimesCmd.AddCommand(chimeListCmd)
 	chimesCmd.AddCommand(chimeDetailsCmd)
 	chimesCmd.AddCommand(chimePatchCmd)
+
+	// Sensors
+	sensorListCmd.Flags().AddFlagSet(listingFlagSet)
+	sensorsCmd.AddCommand(sensorListCmd)
+	sensorsCmd.AddCommand(sensorDetailsCmd)
+	sensorsCmd.AddCommand(sensorPatchCmd)
 }
 
 var protectCmd = &cobra.Command{
@@ -128,6 +136,12 @@ var chimesCmd = &cobra.Command{
 	Use:   "chimes",
 	Short: "Make UniFi Protect `chimes` calls",
 	Long:  `Call chimes endpoints under UniFi Protect's API.`,
+}
+
+var sensorsCmd = &cobra.Command{
+	Use:   "sensors",
+	Short: "Make UniFi Protect `sensors` calls",
+	Long:  `Call sensors endpoints under UniFi Protect's API.`,
 }
 
 var subscribeCmd = &cobra.Command{
@@ -815,6 +829,83 @@ var chimePatchCmd = &cobra.Command{
 			return
 		}
 		err = marshalAndPrintJSON(modifiedchime)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var sensorListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List adopted Protect sensors",
+	Run: func(_ *cobra.Command, _ []string) {
+		c := getClient()
+		sensors, err := c.Protect.Sensors()
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		if idOnly {
+			for _, sensor := range sensors {
+				if idOnly {
+					fmt.Println(sensor.ID)
+				}
+			}
+		} else {
+			err = marshalAndPrintJSON(sensors)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
+		}
+	},
+}
+
+var sensorDetailsCmd = &cobra.Command{
+	Use:   "details [sensor ID]",
+	Short: "Get detailed information about a specific adopted device",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		sensor, err := c.Protect.SensorDetails(types.SensorID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(sensor)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+	},
+}
+
+var sensorPatchCmd = &cobra.Command{
+	Use:   "patch [sensor ID] [sensor JSON filename]",
+	Short: "Patch the configuration of an existing sensor",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		var sensorReq types.SensorPatchRequest
+		err = json.Unmarshal(data, &sensorReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		c := getClient()
+		modifiedsensor, err := c.Protect.SensorPatch(types.SensorID(args[0]), &sensorReq)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		err = marshalAndPrintJSON(modifiedsensor)
 		if err != nil {
 			log.Error(err.Error())
 			return
