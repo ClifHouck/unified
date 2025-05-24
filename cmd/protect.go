@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/jpeg"
 	"os"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -40,6 +41,7 @@ func init() { //nolint:funlen
 	protectCmd.AddCommand(nvrCmd)
 	protectCmd.AddCommand(chimesCmd)
 	protectCmd.AddCommand(sensorsCmd)
+	protectCmd.AddCommand(filesCmd)
 
 	// Subscriptions
 	subscribeCmd.AddCommand(deviceEventsCmd)
@@ -100,6 +102,11 @@ func init() { //nolint:funlen
 	sensorsCmd.AddCommand(sensorListCmd)
 	sensorsCmd.AddCommand(sensorDetailsCmd)
 	sensorsCmd.AddCommand(sensorPatchCmd)
+
+	// Device Asset File Management
+	filesListCmd.Flags().AddFlagSet(listingFlagSet)
+	filesCmd.AddCommand(filesListCmd)
+	filesCmd.AddCommand(fileUploadCmd)
 }
 
 var protectCmd = &cobra.Command{
@@ -142,6 +149,12 @@ var sensorsCmd = &cobra.Command{
 	Use:   "sensors",
 	Short: "Make UniFi Protect `sensors` calls",
 	Long:  `Call sensors endpoints under UniFi Protect's API.`,
+}
+
+var filesCmd = &cobra.Command{
+	Use:   "files",
+	Short: "Make UniFi Protect device asset `files` calls",
+	Long:  `Call device asset files endpoints under UniFi Protect's API.`,
 }
 
 var subscribeCmd = &cobra.Command{
@@ -909,6 +922,53 @@ var sensorPatchCmd = &cobra.Command{
 		if err != nil {
 			log.Error(err.Error())
 			return
+		}
+	},
+}
+
+var filesListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List Protect device asset files",
+	Run: func(_ *cobra.Command, _ []string) {
+		c := getClient()
+		files, err := c.Protect.Files(types.FileTypeAnimations)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		if idOnly {
+			for _, file := range files {
+				if idOnly {
+					fmt.Println(file.Name)
+				}
+			}
+		} else {
+			err = marshalAndPrintJSON(files)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
+		}
+	},
+}
+
+var fileUploadCmd = &cobra.Command{
+	Use:   "upload [filename]",
+	Short: "Upload a device asset file",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		data, err := os.ReadFile(args[0])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		_, filename := filepath.Split(args[0])
+
+		c := getClient()
+		err = c.Protect.FileUpload(types.FileTypeAnimations, filename, data)
+		if err != nil {
+			log.Error(err.Error())
 		}
 	},
 }

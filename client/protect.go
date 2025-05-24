@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"image"
 	"image/jpeg"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 
@@ -218,6 +220,21 @@ var protectAPI = map[string]*apiEndpoint{
 		Description:    "Patch the settings for a specific sensor",
 		Application:    "protect",
 		NumURLArgs:     1,
+		HasRequestBody: true,
+	},
+	"Files": {
+		URLFragment: "files/%s",
+		Method:      http.MethodGet,
+		Description: "Get device assset files by type",
+		NumURLArgs:  1,
+		Application: "protect",
+	},
+	"FileUpload": {
+		URLFragment:    "files/%s",
+		Method:         http.MethodPost,
+		Description:    "Upload device asset file",
+		NumURLArgs:     1,
+		Application:    "protect",
 		HasRequestBody: true,
 	},
 }
@@ -976,4 +993,59 @@ func (pc *protectV1Client) SensorPatch(
 	}
 
 	return updatedSensor, nil
+}
+
+func (pc *protectV1Client) Files(fileType types.FileType) ([]*types.File, error) {
+	body, err := pc.client.doRequest(
+		&requestArgs{
+			Endpoint:     protectAPI["Files"],
+			URLArguments: []any{fileType.String()},
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	var files []*types.File
+
+	err = json.Unmarshal(body, &files)
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func (pc *protectV1Client) FileUpload(fileType types.FileType, filename string, contents []byte) error {
+	buf := new(bytes.Buffer)
+	mpBodyWriter := multipart.NewWriter(buf)
+
+	formFile, err := createFormFileProtect(mpBodyWriter, "file", filename)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(formFile, bytes.NewReader(contents))
+	if err != nil {
+		return err
+	}
+	err = mpBodyWriter.Close()
+	if err != nil {
+		return err
+	}
+
+	endpoint := protectAPI["FileUpload"]
+	endpoint.ContentType = mpBodyWriter.FormDataContentType()
+
+	pc.client.log.WithFields(logrus.Fields{
+		"filename":     filename,
+		"filetype":     fileType.String(),
+		"content-type": endpoint.ContentType,
+	}).Trace("Uploading file...")
+
+	_, err = pc.client.doRequest(
+		&requestArgs{
+			Endpoint:     endpoint,
+			URLArguments: []any{fileType.String()},
+			RequestBody:  buf,
+		})
+	return err
 }

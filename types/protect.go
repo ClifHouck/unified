@@ -56,6 +56,10 @@ type ProtectV1 interface {
 	SensorDetails(SensorID) (*Sensor, error)
 	SensorPatch(SensorID, *SensorPatchRequest) (*Sensor, error)
 
+	// Device Asset File Management
+	Files(FileType) ([]*File, error)
+	FileUpload(FileType, string, []byte) error
+
 	// TODO: Rest of protect API!
 }
 
@@ -377,4 +381,25 @@ type SensorPatchRequest struct {
 	AlarmSettings struct {
 		IsEnabled bool `json:"isEnabled,omitempty"`
 	} `json:"alarmSettings,omitzero"`
+}
+
+type FileType int
+
+const (
+	FileTypeAnimations = iota
+)
+
+var fileTypeToString = map[FileType]string{
+	FileTypeAnimations: "animations",
+}
+
+func (fta FileType) String() string {
+	return fileTypeToString[fta]
+}
+
+type File struct {
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	OriginalName string `json:"originalName"`
+	Path         string `json:"path"`
 }
