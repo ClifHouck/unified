@@ -176,7 +176,6 @@ func (c *Client) renderURL(req *requestArgs) string {
 
 func (c *Client) decodeErrorResponse(body []byte) {
 	var unifiError types.Error
-	c.log.Trace(string(body))
 	err := json.Unmarshal(body, &unifiError)
 
 	switch {
