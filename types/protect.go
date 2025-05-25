@@ -1,7 +1,9 @@
 package types
 
 import (
+	"fmt"
 	"image"
+	"strconv"
 )
 
 type ProtectV1 interface {
@@ -38,6 +40,11 @@ type ProtectV1 interface {
 	CameraDisableMicPermanently(CameraID) (*Camera, error)
 	CameraTalkbackSession(CameraID) (*CameraTalkbackSessionResponse, error)
 
+	// Camera PTZ Control & Management
+	CameraPTZPatrolStart(CameraID, CameraPatrolSlotNumber) error
+	CameraPTZPatrolStop(CameraID) error
+	CameraPTZGotoPresetPosition(CameraID, CameraPresetPositionSlotNumber) error
+
 	// Lights
 	Lights() ([]*Light, error)
 	LightDetails(LightID) (*Light, error)
@@ -62,7 +69,6 @@ type ProtectV1 interface {
 
 	// Alarm Manager
 	AlarmManagerWebhook(AlarmTriggerID) error
-	// TODO: Rest of protect API!
 }
 
 // CameraID is a UniFI protect Camera ID. Interestingly *not* a UUID.
@@ -406,4 +412,35 @@ type File struct {
 	Type         string `json:"type"`
 	OriginalName string `json:"originalName"`
 	Path         string `json:"path"`
+}
+
+type SlotNumber int
+
+const (
+	slotLow  SlotNumber = 0
+	slotHigh SlotNumber = 4
+)
+
+func (s SlotNumber) Valid() bool {
+	return s >= slotLow && s < slotHigh
+}
+
+func (s SlotNumber) String() string {
+	return strconv.Itoa(int(s))
+}
+
+type CameraPatrolSlotNumber struct {
+	SlotNumber
+}
+
+type CameraPresetPositionSlotNumber struct {
+	SlotNumber
+}
+
+type SlotRangeError struct {
+	Slot int
+}
+
+func (sre SlotRangeError) Error() string {
+	return fmt.Sprintf("Slot must be between %d and %d inclusive, got %d", slotLow, slotHigh, sre.Slot)
 }

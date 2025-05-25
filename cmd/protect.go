@@ -6,6 +6,7 @@ import (
 	"image/jpeg"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -86,6 +87,12 @@ func init() { //nolint:funlen
 	camerasCmd.AddCommand(cameraDisableMicPermanentlyCmd)
 	camerasCmd.AddCommand(cameraTalkbackSessionCmd)
 
+	// Camera PTZ Control & Management
+	camerasCmd.AddCommand(cameraPTZCmd)
+	cameraPTZCmd.AddCommand(cameraPTZPatrolStartCmd)
+	cameraPTZCmd.AddCommand(cameraPTZPatrolStopCmd)
+	cameraPTZCmd.AddCommand(cameraPTZGotoPositionCmd)
+
 	// Lights
 	lightListCmd.Flags().AddFlagSet(listingFlagSet)
 	lightsCmd.AddCommand(lightListCmd)
@@ -123,6 +130,12 @@ var camerasCmd = &cobra.Command{
 	Use:   "cameras",
 	Short: "Make UniFi Protect `cameras` calls",
 	Long:  `Call camera endpoints under UniFi Protect's API.`,
+}
+
+var cameraPTZCmd = &cobra.Command{
+	Use:   "ptz",
+	Short: "Make UniFi Protect `cameras/ptz` calls",
+	Long:  `Call camera PTZ endpoints under UniFi Protect's API.`,
 }
 
 var viewersCmd = &cobra.Command{
@@ -990,6 +1003,67 @@ var alarmManagerWebhookCmd = &cobra.Command{
 	Run: func(_ *cobra.Command, args []string) {
 		c := getClient()
 		err := c.Protect.AlarmManagerWebhook(types.AlarmTriggerID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+		}
+	},
+}
+
+var cameraPTZPatrolStartCmd = &cobra.Command{
+	Use:   "patrol-start [camera ID] [patrol slot number]",
+	Short: "Start a camera PTZ patrol",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		num, err := strconv.Atoi(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		patrolSlot := types.CameraPatrolSlotNumber{
+			SlotNumber: types.SlotNumber(num),
+		}
+		err = c.Protect.CameraPTZPatrolStart(types.CameraID(args[0]),
+			patrolSlot)
+		if err != nil {
+			log.Error(err.Error())
+		}
+	},
+}
+
+var cameraPTZPatrolStopCmd = &cobra.Command{
+	Use:   "patrol-stop [camera ID]",
+	Short: "Stop a camera PTZ patrol",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		err := c.Protect.CameraPTZPatrolStop(types.CameraID(args[0]))
+		if err != nil {
+			log.Error(err.Error())
+		}
+	},
+}
+
+var cameraPTZGotoPositionCmd = &cobra.Command{
+	Use:   "goto-position [camera ID] [position slot number]",
+	Short: "Move a camera PTZ to a preset position",
+	Args:  cobra.ExactArgs(2),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+
+		num, err := strconv.Atoi(args[1])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		positionSlot := types.CameraPresetPositionSlotNumber{
+			SlotNumber: types.SlotNumber(num),
+		}
+
+		err = c.Protect.CameraPTZGotoPresetPosition(types.CameraID(args[0]),
+			positionSlot)
 		if err != nil {
 			log.Error(err.Error())
 		}

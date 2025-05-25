@@ -245,6 +245,30 @@ var protectAPI = map[string]*apiEndpoint{
 		Application:    "protect",
 		ExpectedStatus: http.StatusNoContent,
 	},
+	"CameraPTZPatrolStart": {
+		URLFragment:    "cameras/%s/ptz/patrol/start/%s",
+		Method:         http.MethodPost,
+		Description:    "Start a camera PTZ patrol",
+		NumURLArgs:     2,
+		Application:    "protect",
+		ExpectedStatus: http.StatusNoContent,
+	},
+	"CameraPTZPatrolStop": {
+		URLFragment:    "cameras/%s/ptz/patrol/stop",
+		Method:         http.MethodPost,
+		Description:    "Start a camera PTZ patrol",
+		NumURLArgs:     1,
+		Application:    "protect",
+		ExpectedStatus: http.StatusNoContent,
+	},
+	"CameraPTZGotoPresetPosition": {
+		URLFragment:    "cameras/%s/ptz/goto/%s",
+		Method:         http.MethodPost,
+		Description:    "Start a camera PTZ patrol",
+		NumURLArgs:     2,
+		Application:    "protect",
+		ExpectedStatus: http.StatusNoContent,
+	},
 }
 
 type protectV1Client struct {
@@ -1062,6 +1086,42 @@ func (pc *protectV1Client) AlarmManagerWebhook(triggerID types.AlarmTriggerID) e
 	_, err := pc.client.doRequest(&requestArgs{
 		Endpoint:     protectAPI["AlarmManagerWebhook"],
 		URLArguments: []any{triggerID},
+	})
+	return err
+}
+
+func (pc *protectV1Client) CameraPTZPatrolStart(cameraID types.CameraID,
+	slotID types.CameraPatrolSlotNumber) error {
+	if !slotID.Valid() {
+		return types.SlotRangeError{
+			Slot: int(slotID.SlotNumber),
+		}
+	}
+	_, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraPTZPatrolStart"],
+		URLArguments: []any{cameraID, slotID.String()},
+	})
+	return err
+}
+
+func (pc *protectV1Client) CameraPTZPatrolStop(cameraID types.CameraID) error {
+	_, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraPTZPatrolStop"],
+		URLArguments: []any{cameraID},
+	})
+	return err
+}
+
+func (pc *protectV1Client) CameraPTZGotoPresetPosition(cameraID types.CameraID,
+	slotID types.CameraPresetPositionSlotNumber) error {
+	if !slotID.Valid() {
+		return types.SlotRangeError{
+			Slot: int(slotID.SlotNumber),
+		}
+	}
+	_, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["CameraPTZGotoPresetPosition"],
+		URLArguments: []any{cameraID, slotID.String()},
 	})
 	return err
 }
