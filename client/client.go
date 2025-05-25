@@ -97,11 +97,15 @@ func NewClient(ctx context.Context, config *Config, log *logrus.Logger) *Client 
 	return client
 }
 
-func (c *Client) headers() *http.Header {
+func (c *Client) headers(contentType string) *http.Header {
 	headers := &http.Header{}
 	headers.Add("X-Api-Key", c.config.APIKey)
 	headers.Add("Accept", "application/json")
-	headers.Add("Content-Type", "application/json")
+	if contentType != "" {
+		headers.Add("Content-Type", contentType)
+	} else {
+		headers.Add("Content-Type", "application/json")
+	}
 	return headers
 }
 
@@ -112,14 +116,15 @@ func (c *Client) webSocketHeaders() *http.Header {
 }
 
 type apiEndpoint struct {
-	URLFragment    string
-	Method         string
-	ExpectedStatus int
-	Description    string
 	Application    string
-	NumURLArgs     int
-	NumQueryArgs   int
+	ContentType    string
+	Description    string
+	ExpectedStatus int
 	HasRequestBody bool
+	Method         string
+	NumQueryArgs   int
+	NumURLArgs     int
+	URLFragment    string
 }
 
 type requestArgs struct {
@@ -224,7 +229,7 @@ func (c *Client) doRequest(req *requestArgs) ([]byte, error) {
 		return nil, err
 	}
 
-	request.Header = *c.headers()
+	request.Header = *c.headers(req.Endpoint.ContentType)
 
 	resp, err := c.client.Do(request)
 	if err != nil {
