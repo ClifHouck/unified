@@ -237,6 +237,14 @@ var protectAPI = map[string]*apiEndpoint{
 		Application:    "protect",
 		HasRequestBody: true,
 	},
+	"AlarmManagerWebhook": {
+		URLFragment:    "alarm-manager/webhook/%s",
+		Method:         http.MethodPost,
+		Description:    "Send a webhook to the alarm manager to trigger configured alarms",
+		NumURLArgs:     1,
+		Application:    "protect",
+		ExpectedStatus: http.StatusNoContent,
+	},
 }
 
 type protectV1Client struct {
@@ -1047,5 +1055,13 @@ func (pc *protectV1Client) FileUpload(fileType types.FileType, filename string, 
 			URLArguments: []any{fileType.String()},
 			RequestBody:  buf,
 		})
+	return err
+}
+
+func (pc *protectV1Client) AlarmManagerWebhook(triggerID types.AlarmTriggerID) error {
+	_, err := pc.client.doRequest(&requestArgs{
+		Endpoint:     protectAPI["AlarmManagerWebhook"],
+		URLArguments: []any{triggerID},
+	})
 	return err
 }

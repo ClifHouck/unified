@@ -219,6 +219,8 @@ UniFi Protect API is partially supported, with the following endpoints supported
 - All `/v1/lights` endpoints.
 - All `/v1/chimes` endpoints.
 - All `/v1/sensors` endpoints.
+- All `/v1/files` endpoints.
+- All `/v1/alarm-manager` endpoints.
 - `/v1/nvrs` endpoint.
 - `/v1/subscribe/devices`: only partial type support.
 - `/v1/subscribe/events`

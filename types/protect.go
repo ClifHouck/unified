@@ -60,6 +60,8 @@ type ProtectV1 interface {
 	Files(FileType) ([]*File, error)
 	FileUpload(FileType, string, []byte) error
 
+	// Alarm Manager
+	AlarmManagerWebhook(AlarmTriggerID) error
 	// TODO: Rest of protect API!
 }
 
@@ -75,6 +77,8 @@ type LightID string
 type ChimeID string
 
 type SensorID string
+
+type AlarmTriggerID string
 
 type ProtectInfo struct {
 	ApplicationVersion string `json:"applicationVersion"`

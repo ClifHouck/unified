@@ -42,6 +42,7 @@ func init() { //nolint:funlen
 	protectCmd.AddCommand(chimesCmd)
 	protectCmd.AddCommand(sensorsCmd)
 	protectCmd.AddCommand(filesCmd)
+	protectCmd.AddCommand(alarmManagerCmd)
 
 	// Subscriptions
 	subscribeCmd.AddCommand(deviceEventsCmd)
@@ -107,6 +108,9 @@ func init() { //nolint:funlen
 	filesListCmd.Flags().AddFlagSet(listingFlagSet)
 	filesCmd.AddCommand(filesListCmd)
 	filesCmd.AddCommand(fileUploadCmd)
+
+	// Alarm Manager
+	alarmManagerCmd.AddCommand(alarmManagerWebhookCmd)
 }
 
 var protectCmd = &cobra.Command{
@@ -155,6 +159,12 @@ var filesCmd = &cobra.Command{
 	Use:   "files",
 	Short: "Make UniFi Protect device asset `files` calls",
 	Long:  `Call device asset files endpoints under UniFi Protect's API.`,
+}
+
+var alarmManagerCmd = &cobra.Command{
+	Use:   "alarm-manager",
+	Short: "Make UniFi Protect `alarm-manager` calls",
+	Long:  `Call alarm-manager endpoints under UniFi Protect's API.`,
 }
 
 var subscribeCmd = &cobra.Command{
@@ -967,6 +977,19 @@ var fileUploadCmd = &cobra.Command{
 
 		c := getClient()
 		err = c.Protect.FileUpload(types.FileTypeAnimations, filename, data)
+		if err != nil {
+			log.Error(err.Error())
+		}
+	},
+}
+
+var alarmManagerWebhookCmd = &cobra.Command{
+	Use:   "webhook [alarm trigger ID]",
+	Short: "Send a webhook to the alarm manager to trigger configured alarms",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		c := getClient()
+		err := c.Protect.AlarmManagerWebhook(types.AlarmTriggerID(args[0]))
 		if err != nil {
 			log.Error(err.Error())
 		}
