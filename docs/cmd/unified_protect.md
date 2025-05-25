@@ -26,6 +26,7 @@ Complete access to UniFi's Protect API from the command line
 ### SEE ALSO
 
 * [unified](unified.md)	 - Make UniFi Network or Protect API calls
+* [unified protect alarm-manager](unified_protect_alarm-manager.md)	 - Make UniFi Protect `alarm-manager` calls
 * [unified protect cameras](unified_protect_cameras.md)	 - Make UniFi Protect `cameras` calls
 * [unified protect chimes](unified_protect_chimes.md)	 - Make UniFi Protect `chimes` calls
 * [unified protect files](unified_protect_files.md)	 - Make UniFi Protect device asset `files` calls
