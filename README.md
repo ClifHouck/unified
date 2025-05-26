@@ -179,11 +179,9 @@ $ mage buildExamples
 
 # Project Roadmap
 
-Full Protect API support is planned in short order. After the initial versioned
-release of this project, work will proceed towards full Protect V1 API support.
-As well as a full v1.0.0 release.
+See [API Support Status](#API-Support-Status) for information about what's currently supported.
 
-Reference documentation through godoc is also a priority before a v1.0.0 release.
+Reference documentation through godoc is a priority before a v1.0.0 release.
 
 Access API might be supported in a future release. Contributions welcome here.
 
@@ -208,25 +206,9 @@ verification by default before a full v1.0.0 release.
 
 ## API Support Status
 
-UniFi Network API V1 is fully supported as of Network application version "9.1.120".
+UniFi Network V1 API is fully supported as of Network application version "9.1.120".
 
-UniFi Protect API is partially supported, with the following endpoints supported:
-
-- `/v1/meta/info`
-- All `/v1/cameras` endpoints.
-- All `/v1/cameras/ptz` endpoints.
-- All `/v1/viewers` endpints.
-- All `/v1/liveviews` endpoints.
-- All `/v1/lights` endpoints.
-- All `/v1/chimes` endpoints.
-- All `/v1/sensors` endpoints.
-- All `/v1/files` endpoints.
-- All `/v1/alarm-manager` endpoints.
-- `/v1/nvrs` endpoint.
-- `/v1/subscribe/devices`: only partial type support.
-- `/v1/subscribe/events`
-
-The rest of the Protect API is TODO, but coming shortly.
+UniFi Protect V1 API is fully supported as of Protect application version "".
 
 UniFi Access API is not yet supported.
 
