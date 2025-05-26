@@ -30,6 +30,7 @@ Call camera endpoints under UniFi Protect's API.
 * [unified protect cameras disable-mic-permanently](unified_protect_cameras_disable-mic-permanently.md)	 - Permanently disable the microphone for a specific camera
 * [unified protect cameras list](unified_protect_cameras_list.md)	 - List adopted Protect cameras
 * [unified protect cameras patch](unified_protect_cameras_patch.md)	 - Patch the configuration of an existing camera
+* [unified protect cameras ptz](unified_protect_cameras_ptz.md)	 - Make UniFi Protect `cameras/ptz` calls
 * [unified protect cameras snapshot](unified_protect_cameras_snapshot.md)	 - Get a live snapshot image from a specified camera and save it to a file
 * [unified protect cameras stream-create](unified_protect_cameras_stream-create.md)	 - Create RTSPS stream(s), based on qualities specified, for a camera
 * [unified protect cameras stream-delete](unified_protect_cameras_stream-delete.md)	 - Delete RTSPS stream(s), based on qualities specified, for a camera
