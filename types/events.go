@@ -199,7 +199,8 @@ var AllProtectEvents = []interface{}{
 }
 
 type ProtectDeviceEvent struct {
-	Type string `json:"type"`
+	Type     string `json:"type"`
+	ModelKey string `json:"modelKey"`
 
 	// Polymorphic object that maps to an Event
 	Item     interface{}     `json:"-"`
@@ -207,7 +208,58 @@ type ProtectDeviceEvent struct {
 	RawItem  json.RawMessage `json:"item"`
 }
 
-// TODO: func (pde *ProtectDeviceEvent) UnmarshalJSON(data []byte) error {}
+func (pde *ProtectDeviceEvent) UnmarshalJSON(data []byte) error {
+	type event ProtectDeviceEvent
+
+	err := json.Unmarshal(data, (*event)(pde))
+	if err != nil {
+		return err
+	}
+
+	var item ProtectDeviceEventItem
+	err = json.Unmarshal(pde.RawItem, &item)
+	if err != nil {
+		return err
+	}
+
+	switch item.ModelKey {
+	case "nvr":
+		pde.Item = &ProtectNVREvent{}
+	case "camera":
+		pde.Item = &ProtectCameraEvent{}
+	case "chime":
+		pde.Item = &ProtectChimeEvent{}
+	case "light":
+		pde.Item = &ProtectLightEvent{}
+	case "viewer":
+		pde.Item = &ProtectViewerEvent{}
+	case "speaker":
+		pde.Item = &ProtectSpeakerEvent{}
+	case "bridge":
+		pde.Item = &ProtectBridgeEvent{}
+	case "doorlock":
+		pde.Item = &ProtectDoorlockEvent{}
+	case "sensor":
+		pde.Item = &ProtectSensorEvent{}
+	case "aiProcessor":
+		pde.Item = &ProtectAIProcessorEvent{}
+	case "aiPort":
+		pde.Item = &ProtectAIPortEvent{}
+	case "linkStation":
+		pde.Item = &ProtectLinkStationEvent{}
+	default:
+		return fmt.Errorf("model key '%s'", pde.ModelKey)
+	}
+
+	err = json.Unmarshal(pde.RawItem, pde.Item)
+	if err != nil {
+		return err
+	}
+
+	pde.ModelKey = item.ModelKey
+
+	return nil
+}
 
 type ProtectDeviceEventItem struct {
 	ID       string `json:"id"`
@@ -216,11 +268,53 @@ type ProtectDeviceEventItem struct {
 	State    string `json:"state"`
 }
 
-type ProtectAddCameraEvent struct {
+type ProtectCameraEvent Camera
+
+type ProtectNVREvent NVR
+
+type ProtectChimeEvent Chime
+
+type ProtectLightEvent Light
+
+type ProtectViewerEvent Viewer
+
+type ProtectSpeakerEvent struct {
 	ProtectDeviceEventItem
-	// FIXME: Add the reset of device events!
+}
+
+type ProtectBridgeEvent struct {
+	ProtectDeviceEventItem
+}
+
+type ProtectDoorlockEvent struct {
+	ProtectDeviceEventItem
+}
+
+type ProtectSensorEvent Sensor
+
+type ProtectAIProcessorEvent struct {
+	ProtectDeviceEventItem
+}
+
+type ProtectAIPortEvent struct {
+	ProtectDeviceEventItem
+}
+
+type ProtectLinkStationEvent struct {
+	ProtectDeviceEventItem
 }
 
 var AllProtectDeviceEvents = []interface{}{
-	ProtectAddCameraEvent{},
+	ProtectCameraEvent{},
+	ProtectNVREvent{},
+	ProtectChimeEvent{},
+	ProtectLightEvent{},
+	ProtectViewerEvent{},
+	ProtectSpeakerEvent{},
+	ProtectBridgeEvent{},
+	ProtectDoorlockEvent{},
+	ProtectSensorEvent{},
+	ProtectAIProcessorEvent{},
+	ProtectAIPortEvent{},
+	ProtectLinkStationEvent{},
 }

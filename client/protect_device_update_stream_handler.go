@@ -16,8 +16,41 @@ type ProtectDeviceEventStreamHandler struct {
 	ctx    context.Context
 	stream <-chan *types.ProtectDeviceEvent
 
-	protectAddCameraEventHandler func(string, *types.ProtectAddCameraEvent)
-	protectAddCameraEventMutex   sync.Mutex
+	protectCameraEventHandler func(string, *types.ProtectCameraEvent)
+	protectCameraEventMutex   sync.Mutex
+
+	protectNVREventHandler func(string, *types.ProtectNVREvent)
+	protectNVREventMutex   sync.Mutex
+
+	protectChimeEventHandler func(string, *types.ProtectChimeEvent)
+	protectChimeEventMutex   sync.Mutex
+
+	protectLightEventHandler func(string, *types.ProtectLightEvent)
+	protectLightEventMutex   sync.Mutex
+
+	protectViewerEventHandler func(string, *types.ProtectViewerEvent)
+	protectViewerEventMutex   sync.Mutex
+
+	protectSpeakerEventHandler func(string, *types.ProtectSpeakerEvent)
+	protectSpeakerEventMutex   sync.Mutex
+
+	protectBridgeEventHandler func(string, *types.ProtectBridgeEvent)
+	protectBridgeEventMutex   sync.Mutex
+
+	protectDoorlockEventHandler func(string, *types.ProtectDoorlockEvent)
+	protectDoorlockEventMutex   sync.Mutex
+
+	protectSensorEventHandler func(string, *types.ProtectSensorEvent)
+	protectSensorEventMutex   sync.Mutex
+
+	protectAIProcessorEventHandler func(string, *types.ProtectAIProcessorEvent)
+	protectAIProcessorEventMutex   sync.Mutex
+
+	protectAIPortEventHandler func(string, *types.ProtectAIPortEvent)
+	protectAIPortEventMutex   sync.Mutex
+
+	protectLinkStationEventHandler func(string, *types.ProtectLinkStationEvent)
+	protectLinkStationEventMutex   sync.Mutex
 } // ProtectDeviceEventStreamHandler
 
 func NewProtectDeviceEventStreamHandler(ctx context.Context,
@@ -54,8 +87,30 @@ func (esh *ProtectDeviceEventStreamHandler) Process() {
 			}).Info("Received ProtectDeviceEvent")
 
 			switch event := streamEvent.Item.(type) {
-			case *types.ProtectAddCameraEvent:
-				go esh.invokeProtectAddCameraEventHandler(streamEvent.Type, event)
+			case *types.ProtectCameraEvent:
+				go esh.invokeProtectCameraEventHandler(streamEvent.Type, event)
+			case *types.ProtectNVREvent:
+				go esh.invokeProtectNVREventHandler(streamEvent.Type, event)
+			case *types.ProtectChimeEvent:
+				go esh.invokeProtectChimeEventHandler(streamEvent.Type, event)
+			case *types.ProtectLightEvent:
+				go esh.invokeProtectLightEventHandler(streamEvent.Type, event)
+			case *types.ProtectViewerEvent:
+				go esh.invokeProtectViewerEventHandler(streamEvent.Type, event)
+			case *types.ProtectSpeakerEvent:
+				go esh.invokeProtectSpeakerEventHandler(streamEvent.Type, event)
+			case *types.ProtectBridgeEvent:
+				go esh.invokeProtectBridgeEventHandler(streamEvent.Type, event)
+			case *types.ProtectDoorlockEvent:
+				go esh.invokeProtectDoorlockEventHandler(streamEvent.Type, event)
+			case *types.ProtectSensorEvent:
+				go esh.invokeProtectSensorEventHandler(streamEvent.Type, event)
+			case *types.ProtectAIProcessorEvent:
+				go esh.invokeProtectAIProcessorEventHandler(streamEvent.Type, event)
+			case *types.ProtectAIPortEvent:
+				go esh.invokeProtectAIPortEventHandler(streamEvent.Type, event)
+			case *types.ProtectLinkStationEvent:
+				go esh.invokeProtectLinkStationEventHandler(streamEvent.Type, event)
 
 			default:
 				log.Errorf("Unknown type encountered: '%s'", streamEvent.ItemType)
@@ -68,18 +123,194 @@ func (esh *ProtectDeviceEventStreamHandler) Process() {
 	}
 }
 
-func (esh *ProtectDeviceEventStreamHandler) SetProtectAddCameraEventHandler(handler func(string, *types.ProtectAddCameraEvent)) {
-	esh.protectAddCameraEventMutex.Lock()
-	defer esh.protectAddCameraEventMutex.Unlock()
+func (esh *ProtectDeviceEventStreamHandler) SetProtectCameraEventHandler(handler func(string, *types.ProtectCameraEvent)) {
+	esh.protectCameraEventMutex.Lock()
+	defer esh.protectCameraEventMutex.Unlock()
 
-	esh.protectAddCameraEventHandler = handler
+	esh.protectCameraEventHandler = handler
 }
 
-func (esh *ProtectDeviceEventStreamHandler) invokeProtectAddCameraEventHandler(eventType string, event *types.ProtectAddCameraEvent) {
-	esh.protectAddCameraEventMutex.Lock()
-	defer esh.protectAddCameraEventMutex.Unlock()
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectCameraEventHandler(eventType string, event *types.ProtectCameraEvent) {
+	esh.protectCameraEventMutex.Lock()
+	defer esh.protectCameraEventMutex.Unlock()
 
-	if esh.protectAddCameraEventHandler != nil {
-		go esh.protectAddCameraEventHandler(eventType, event)
+	if esh.protectCameraEventHandler != nil {
+		go esh.protectCameraEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectNVREventHandler(handler func(string, *types.ProtectNVREvent)) {
+	esh.protectNVREventMutex.Lock()
+	defer esh.protectNVREventMutex.Unlock()
+
+	esh.protectNVREventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectNVREventHandler(eventType string, event *types.ProtectNVREvent) {
+	esh.protectNVREventMutex.Lock()
+	defer esh.protectNVREventMutex.Unlock()
+
+	if esh.protectNVREventHandler != nil {
+		go esh.protectNVREventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectChimeEventHandler(handler func(string, *types.ProtectChimeEvent)) {
+	esh.protectChimeEventMutex.Lock()
+	defer esh.protectChimeEventMutex.Unlock()
+
+	esh.protectChimeEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectChimeEventHandler(eventType string, event *types.ProtectChimeEvent) {
+	esh.protectChimeEventMutex.Lock()
+	defer esh.protectChimeEventMutex.Unlock()
+
+	if esh.protectChimeEventHandler != nil {
+		go esh.protectChimeEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectLightEventHandler(handler func(string, *types.ProtectLightEvent)) {
+	esh.protectLightEventMutex.Lock()
+	defer esh.protectLightEventMutex.Unlock()
+
+	esh.protectLightEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectLightEventHandler(eventType string, event *types.ProtectLightEvent) {
+	esh.protectLightEventMutex.Lock()
+	defer esh.protectLightEventMutex.Unlock()
+
+	if esh.protectLightEventHandler != nil {
+		go esh.protectLightEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectViewerEventHandler(handler func(string, *types.ProtectViewerEvent)) {
+	esh.protectViewerEventMutex.Lock()
+	defer esh.protectViewerEventMutex.Unlock()
+
+	esh.protectViewerEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectViewerEventHandler(eventType string, event *types.ProtectViewerEvent) {
+	esh.protectViewerEventMutex.Lock()
+	defer esh.protectViewerEventMutex.Unlock()
+
+	if esh.protectViewerEventHandler != nil {
+		go esh.protectViewerEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectSpeakerEventHandler(handler func(string, *types.ProtectSpeakerEvent)) {
+	esh.protectSpeakerEventMutex.Lock()
+	defer esh.protectSpeakerEventMutex.Unlock()
+
+	esh.protectSpeakerEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectSpeakerEventHandler(eventType string, event *types.ProtectSpeakerEvent) {
+	esh.protectSpeakerEventMutex.Lock()
+	defer esh.protectSpeakerEventMutex.Unlock()
+
+	if esh.protectSpeakerEventHandler != nil {
+		go esh.protectSpeakerEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectBridgeEventHandler(handler func(string, *types.ProtectBridgeEvent)) {
+	esh.protectBridgeEventMutex.Lock()
+	defer esh.protectBridgeEventMutex.Unlock()
+
+	esh.protectBridgeEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectBridgeEventHandler(eventType string, event *types.ProtectBridgeEvent) {
+	esh.protectBridgeEventMutex.Lock()
+	defer esh.protectBridgeEventMutex.Unlock()
+
+	if esh.protectBridgeEventHandler != nil {
+		go esh.protectBridgeEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectDoorlockEventHandler(handler func(string, *types.ProtectDoorlockEvent)) {
+	esh.protectDoorlockEventMutex.Lock()
+	defer esh.protectDoorlockEventMutex.Unlock()
+
+	esh.protectDoorlockEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectDoorlockEventHandler(eventType string, event *types.ProtectDoorlockEvent) {
+	esh.protectDoorlockEventMutex.Lock()
+	defer esh.protectDoorlockEventMutex.Unlock()
+
+	if esh.protectDoorlockEventHandler != nil {
+		go esh.protectDoorlockEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectSensorEventHandler(handler func(string, *types.ProtectSensorEvent)) {
+	esh.protectSensorEventMutex.Lock()
+	defer esh.protectSensorEventMutex.Unlock()
+
+	esh.protectSensorEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectSensorEventHandler(eventType string, event *types.ProtectSensorEvent) {
+	esh.protectSensorEventMutex.Lock()
+	defer esh.protectSensorEventMutex.Unlock()
+
+	if esh.protectSensorEventHandler != nil {
+		go esh.protectSensorEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectAIProcessorEventHandler(handler func(string, *types.ProtectAIProcessorEvent)) {
+	esh.protectAIProcessorEventMutex.Lock()
+	defer esh.protectAIProcessorEventMutex.Unlock()
+
+	esh.protectAIProcessorEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectAIProcessorEventHandler(eventType string, event *types.ProtectAIProcessorEvent) {
+	esh.protectAIProcessorEventMutex.Lock()
+	defer esh.protectAIProcessorEventMutex.Unlock()
+
+	if esh.protectAIProcessorEventHandler != nil {
+		go esh.protectAIProcessorEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectAIPortEventHandler(handler func(string, *types.ProtectAIPortEvent)) {
+	esh.protectAIPortEventMutex.Lock()
+	defer esh.protectAIPortEventMutex.Unlock()
+
+	esh.protectAIPortEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectAIPortEventHandler(eventType string, event *types.ProtectAIPortEvent) {
+	esh.protectAIPortEventMutex.Lock()
+	defer esh.protectAIPortEventMutex.Unlock()
+
+	if esh.protectAIPortEventHandler != nil {
+		go esh.protectAIPortEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectDeviceEventStreamHandler) SetProtectLinkStationEventHandler(handler func(string, *types.ProtectLinkStationEvent)) {
+	esh.protectLinkStationEventMutex.Lock()
+	defer esh.protectLinkStationEventMutex.Unlock()
+
+	esh.protectLinkStationEventHandler = handler
+}
+
+func (esh *ProtectDeviceEventStreamHandler) invokeProtectLinkStationEventHandler(eventType string, event *types.ProtectLinkStationEvent) {
+	esh.protectLinkStationEventMutex.Lock()
+	defer esh.protectLinkStationEventMutex.Unlock()
+
+	if esh.protectLinkStationEventHandler != nil {
+		go esh.protectLinkStationEventHandler(eventType, event)
 	}
 }
