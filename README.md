@@ -206,9 +206,9 @@ verification by default before a full v1.0.0 release.
 
 ## API Support Status
 
-UniFi Network V1 API is fully supported as of Network application version "9.1.120".
+UniFi Network V1 API is fully supported as of Network application version ["9.1.120"](https://community.ui.com/releases/UniFi-Network-Application-9-1-120/a5e88ae2-3c44-420a-bebb-5120bf2288b2).
 
-UniFi Protect V1 API is fully supported as of Protect application version "".
+UniFi Protect V1 API is fully supported as of Protect application version ["5.3.48"](https://community.ui.com/releases/UniFi-Protect-Application-5-3-48/d7a11754-dfb5-4b5f-86fa-eceac0ce7b7e).
 
 UniFi Access API is not yet supported.
 
