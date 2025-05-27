@@ -1,15 +1,15 @@
-## unified network devices action
+## unified network devices port-action
 
-Execute an action on a specific adopted device
+Execute an action on a specific adopted device's port
 
 ```
-unified network devices action [site ID] [device ID] [action] [flags]
+unified network devices port-action [site ID] [device ID] [portIdx] [action] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for action
+  -h, --help   help for port-action
 ```
 
 ### Options inherited from parent commands

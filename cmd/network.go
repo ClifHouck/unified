@@ -254,8 +254,8 @@ var actionDevicesCmd = &cobra.Command{
 }
 
 var actionDevicePortCmd = &cobra.Command{
-	Use:   "action [site ID] [device ID] [portIdx] [action]",
-	Short: "Execute an action on a specific adopted device",
+	Use:   "port-action [site ID] [device ID] [portIdx] [action]",
+	Short: "Execute an action on a specific adopted device's port",
 	Args:  cobra.ExactArgs(4),
 	Run: func(_ *cobra.Command, args []string) {
 		c := getClient()
