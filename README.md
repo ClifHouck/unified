@@ -1,6 +1,6 @@
 # Unified
 
-[![CI](/.github/actions/workflows/ci.yaml/badge.svg)](/.github/workflows/ci.yaml)
+[![CI](https://github.com/ClifHouck/unified/actions/workflows/ci.yaml/badge.svg)](https://github.com/ClifHouck/unified/actions/workflows/ci.yaml)
 
 An Unofficial UniFi Network & Protect API Client & CLI command, written in Golang.
 
