@@ -20,17 +20,20 @@ const GENERATE_STREAM_HANDLERS_BINARY = "./tools/generators/bin/generate_stream_
 // Builds any generators found under './tools/generators'.
 func BuildGenerators() error {
 	dest := GENERATE_STREAM_HANDLERS_BINARY
-	source := "./tools/generators/generate_stream_handlers.go"
+	sources := []string{
+		"./tools/generators/generate_stream_handlers.go",
+		"./types/events.go",
+	}
 
 	logger := log.WithFields(log.Fields{"destination": dest})
 
-	outOfDate, err := target.Path(dest, source)
+	outOfDate, err := target.Path(dest, sources...)
 	if err != nil {
 		return err
 	}
 
 	if outOfDate {
-		err := sh.Run("go", "build", "-o", dest, source)
+		err := sh.Run("go", "build", "-o", dest, sources[0])
 		if err != nil {
 			return err
 		}
