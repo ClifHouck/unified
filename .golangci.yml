@@ -439,6 +439,8 @@ linters:
       - text: 'comment on exported \S+ \S+ should be of the form ".+"'
         source: '// ?(nolint|TODO)'
         linters: [ revive, staticcheck ]
+      - text: 'avoid meaningless package names'
+        linters: [ revive ]
       - path: '_stream_handler\.go'
         linters: [ golines ]
       - path: _test\.go
