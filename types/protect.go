@@ -334,16 +334,16 @@ type Sensor struct {
 		} `json:"humidity"`
 		Temperature struct {
 			Value  float64 `json:"value"`
-			Status string `json:"status"`
+			Status string  `json:"status"`
 		} `json:"temperature"`
 	} `json:"stats"`
-	LightSettings 	 	SensorSettings `json:"lightSettings"`
-	HumiditySettings 	SensorSettings `json:"humiditySettings"`
+	LightSettings       SensorSettings `json:"lightSettings"`
+	HumiditySettings    SensorSettings `json:"humiditySettings"`
 	TemperatureSettings SensorSettings `json:"temperatureSettings"`
-	IsOpened            bool `json:"isOpened"`
-	OpenStatusChangedAt int  `json:"openStatusChangedAt"`
-	IsMotionDetected    bool `json:"isMotionDetected"`
-	MotionDetectedAt    int  `json:"motionDetectedAt"`
+	IsOpened            bool           `json:"isOpened"`
+	OpenStatusChangedAt int            `json:"openStatusChangedAt"`
+	IsMotionDetected    bool           `json:"isMotionDetected"`
+	MotionDetectedAt    int            `json:"motionDetectedAt"`
 	MotionSettings      struct {
 		IsEnabled   bool `json:"isEnabled"`
 		Sensitivity int  `json:"sensitivity"`
@@ -357,11 +357,11 @@ type Sensor struct {
 }
 
 type SensorPatchRequest struct {
-	Name          string `json:"name,omitempty"`
-	LightSettings SensorSettings `json:"lightSettings,omitzero"`
-	HumiditySettings SensorSettings `json:"humiditySettings,omitzero"`
+	Name                string         `json:"name,omitempty"`
+	LightSettings       SensorSettings `json:"lightSettings,omitzero"`
+	HumiditySettings    SensorSettings `json:"humiditySettings,omitzero"`
 	TemperatureSettings SensorSettings `json:"temperatureSettings,omitzero"`
-	MotionSettings struct {
+	MotionSettings      struct {
 		IsEnabled   bool `json:"isEnabled,omitempty"`
 		Sensitivity int  `json:"sensitivity,omitempty"`
 	} `json:"motionSettings,omitzero"`
