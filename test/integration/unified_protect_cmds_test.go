@@ -118,6 +118,10 @@ func TestUnifiedCmdProtectGETCommands(t *testing.T) {
 			Name:    "Test 'protect cameras get-stream'",
 			Command: []string{"protect", "cameras", "stream-get", idSet.CameraID},
 		},
+		{
+			Name:    "Test 'protect sensors list'",
+			Command: []string{"protect", "sensors", "list"},
+		},
 	}
 
 	for _, tc := range protectTestCases {
