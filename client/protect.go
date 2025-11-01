@@ -627,6 +627,9 @@ func (pc *protectV1Client) SubscribeProtectEvents() (<-chan *types.ProtectEvent,
 			err = json.Unmarshal(data, &protectEvent)
 			if err != nil {
 				pc.client.log.WithFields(logrus.Fields{
+					"data": string(data),
+				}).Trace("Raw JSON data")
+				pc.client.log.WithFields(logrus.Fields{
 					"url":   url,
 					"error": err.Error(),
 				}).Error("json.Unmarshal returned error")
@@ -679,7 +682,7 @@ func (pc *protectV1Client) SubscribeDeviceEvents() (<-chan *types.ProtectDeviceE
 				pc.client.log.WithFields(logrus.Fields{
 					"url":   url,
 					"error": readErr.Error(),
-				}).Error("json.Unmarshal returned error")
+				}).Error("Websocket Read returned error")
 				close(eventChan)
 				return
 			}
@@ -695,6 +698,9 @@ func (pc *protectV1Client) SubscribeDeviceEvents() (<-chan *types.ProtectDeviceE
 			var protectDeviceUpdate *types.ProtectDeviceEvent
 			unmarshalErr := json.Unmarshal(data, &protectDeviceUpdate)
 			if unmarshalErr != nil {
+				pc.client.log.WithFields(logrus.Fields{
+					"data": string(data),
+				}).Trace("Raw JSON data")
 				pc.client.log.WithFields(logrus.Fields{
 					"url":   url,
 					"error": err.Error(),

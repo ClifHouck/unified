@@ -40,14 +40,17 @@ type ProtectEventStreamHandler struct {
 	sensorClosedEventHandler func(string, *types.SensorClosedEvent)
 	sensorClosedEventMutex   sync.Mutex
 
+	sensorMotionEventHandler func(string, *types.SensorMotionEvent)
+	sensorMotionEventMutex   sync.Mutex
+
 	lightMotionEventHandler func(string, *types.LightMotionEvent)
 	lightMotionEventMutex   sync.Mutex
 
 	cameraMotionEventHandler func(string, *types.CameraMotionEvent)
 	cameraMotionEventMutex   sync.Mutex
 
-	cameraSmartDetectAudioEventHandler func(string, *types.CameraSmartDetectAudioEvent)
-	cameraSmartDetectAudioEventMutex   sync.Mutex
+	cameraSmartAudioDetectEventHandler func(string, *types.CameraSmartAudioDetectEvent)
+	cameraSmartAudioDetectEventMutex   sync.Mutex
 
 	cameraSmartDetectZoneEventHandler func(string, *types.CameraSmartDetectZoneEvent)
 	cameraSmartDetectZoneEventMutex   sync.Mutex
@@ -55,8 +58,8 @@ type ProtectEventStreamHandler struct {
 	cameraSmartDetectLineEventHandler func(string, *types.CameraSmartDetectLineEvent)
 	cameraSmartDetectLineEventMutex   sync.Mutex
 
-	cameraSmartDetectLoiterEventHandler func(string, *types.CameraSmartDetectLoiterEvent)
-	cameraSmartDetectLoiterEventMutex   sync.Mutex
+	cameraSmartDetectLoiterZoneEventHandler func(string, *types.CameraSmartDetectLoiterZoneEvent)
+	cameraSmartDetectLoiterZoneEventMutex   sync.Mutex
 } // ProtectEventStreamHandler
 
 func NewProtectEventStreamHandler(ctx context.Context,
@@ -109,18 +112,20 @@ func (esh *ProtectEventStreamHandler) Process() {
 				go esh.invokeSensorOpenedEventHandler(streamEvent.Type, event)
 			case *types.SensorClosedEvent:
 				go esh.invokeSensorClosedEventHandler(streamEvent.Type, event)
+			case *types.SensorMotionEvent:
+				go esh.invokeSensorMotionEventHandler(streamEvent.Type, event)
 			case *types.LightMotionEvent:
 				go esh.invokeLightMotionEventHandler(streamEvent.Type, event)
 			case *types.CameraMotionEvent:
 				go esh.invokeCameraMotionEventHandler(streamEvent.Type, event)
-			case *types.CameraSmartDetectAudioEvent:
-				go esh.invokeCameraSmartDetectAudioEventHandler(streamEvent.Type, event)
+			case *types.CameraSmartAudioDetectEvent:
+				go esh.invokeCameraSmartAudioDetectEventHandler(streamEvent.Type, event)
 			case *types.CameraSmartDetectZoneEvent:
 				go esh.invokeCameraSmartDetectZoneEventHandler(streamEvent.Type, event)
 			case *types.CameraSmartDetectLineEvent:
 				go esh.invokeCameraSmartDetectLineEventHandler(streamEvent.Type, event)
-			case *types.CameraSmartDetectLoiterEvent:
-				go esh.invokeCameraSmartDetectLoiterEventHandler(streamEvent.Type, event)
+			case *types.CameraSmartDetectLoiterZoneEvent:
+				go esh.invokeCameraSmartDetectLoiterZoneEventHandler(streamEvent.Type, event)
 
 			default:
 				log.Errorf("Unknown type encountered: '%s'", streamEvent.ItemType)
@@ -261,6 +266,22 @@ func (esh *ProtectEventStreamHandler) invokeSensorClosedEventHandler(eventType s
 	}
 }
 
+func (esh *ProtectEventStreamHandler) SetSensorMotionEventHandler(handler func(string, *types.SensorMotionEvent)) {
+	esh.sensorMotionEventMutex.Lock()
+	defer esh.sensorMotionEventMutex.Unlock()
+
+	esh.sensorMotionEventHandler = handler
+}
+
+func (esh *ProtectEventStreamHandler) invokeSensorMotionEventHandler(eventType string, event *types.SensorMotionEvent) {
+	esh.sensorMotionEventMutex.Lock()
+	defer esh.sensorMotionEventMutex.Unlock()
+
+	if esh.sensorMotionEventHandler != nil {
+		go esh.sensorMotionEventHandler(eventType, event)
+	}
+}
+
 func (esh *ProtectEventStreamHandler) SetLightMotionEventHandler(handler func(string, *types.LightMotionEvent)) {
 	esh.lightMotionEventMutex.Lock()
 	defer esh.lightMotionEventMutex.Unlock()
@@ -293,19 +314,19 @@ func (esh *ProtectEventStreamHandler) invokeCameraMotionEventHandler(eventType s
 	}
 }
 
-func (esh *ProtectEventStreamHandler) SetCameraSmartDetectAudioEventHandler(handler func(string, *types.CameraSmartDetectAudioEvent)) {
-	esh.cameraSmartDetectAudioEventMutex.Lock()
-	defer esh.cameraSmartDetectAudioEventMutex.Unlock()
+func (esh *ProtectEventStreamHandler) SetCameraSmartAudioDetectEventHandler(handler func(string, *types.CameraSmartAudioDetectEvent)) {
+	esh.cameraSmartAudioDetectEventMutex.Lock()
+	defer esh.cameraSmartAudioDetectEventMutex.Unlock()
 
-	esh.cameraSmartDetectAudioEventHandler = handler
+	esh.cameraSmartAudioDetectEventHandler = handler
 }
 
-func (esh *ProtectEventStreamHandler) invokeCameraSmartDetectAudioEventHandler(eventType string, event *types.CameraSmartDetectAudioEvent) {
-	esh.cameraSmartDetectAudioEventMutex.Lock()
-	defer esh.cameraSmartDetectAudioEventMutex.Unlock()
+func (esh *ProtectEventStreamHandler) invokeCameraSmartAudioDetectEventHandler(eventType string, event *types.CameraSmartAudioDetectEvent) {
+	esh.cameraSmartAudioDetectEventMutex.Lock()
+	defer esh.cameraSmartAudioDetectEventMutex.Unlock()
 
-	if esh.cameraSmartDetectAudioEventHandler != nil {
-		go esh.cameraSmartDetectAudioEventHandler(eventType, event)
+	if esh.cameraSmartAudioDetectEventHandler != nil {
+		go esh.cameraSmartAudioDetectEventHandler(eventType, event)
 	}
 }
 
@@ -341,18 +362,18 @@ func (esh *ProtectEventStreamHandler) invokeCameraSmartDetectLineEventHandler(ev
 	}
 }
 
-func (esh *ProtectEventStreamHandler) SetCameraSmartDetectLoiterEventHandler(handler func(string, *types.CameraSmartDetectLoiterEvent)) {
-	esh.cameraSmartDetectLoiterEventMutex.Lock()
-	defer esh.cameraSmartDetectLoiterEventMutex.Unlock()
+func (esh *ProtectEventStreamHandler) SetCameraSmartDetectLoiterZoneEventHandler(handler func(string, *types.CameraSmartDetectLoiterZoneEvent)) {
+	esh.cameraSmartDetectLoiterZoneEventMutex.Lock()
+	defer esh.cameraSmartDetectLoiterZoneEventMutex.Unlock()
 
-	esh.cameraSmartDetectLoiterEventHandler = handler
+	esh.cameraSmartDetectLoiterZoneEventHandler = handler
 }
 
-func (esh *ProtectEventStreamHandler) invokeCameraSmartDetectLoiterEventHandler(eventType string, event *types.CameraSmartDetectLoiterEvent) {
-	esh.cameraSmartDetectLoiterEventMutex.Lock()
-	defer esh.cameraSmartDetectLoiterEventMutex.Unlock()
+func (esh *ProtectEventStreamHandler) invokeCameraSmartDetectLoiterZoneEventHandler(eventType string, event *types.CameraSmartDetectLoiterZoneEvent) {
+	esh.cameraSmartDetectLoiterZoneEventMutex.Lock()
+	defer esh.cameraSmartDetectLoiterZoneEventMutex.Unlock()
 
-	if esh.cameraSmartDetectLoiterEventHandler != nil {
-		go esh.cameraSmartDetectLoiterEventHandler(eventType, event)
+	if esh.cameraSmartDetectLoiterZoneEventHandler != nil {
+		go esh.cameraSmartDetectLoiterZoneEventHandler(eventType, event)
 	}
 }
