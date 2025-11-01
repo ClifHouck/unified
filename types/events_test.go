@@ -13,20 +13,19 @@ import (
 )
 
 func rawTypeNameToJSONEventName(rawTypeName string) string {
-		jsonTypeID := strings.ToLower(rawTypeName[0:1]) + rawTypeName[1:len(rawTypeName)-5]
-		jsonTypeID = strings.ReplaceAll(jsonTypeID, "camera", "")
-		jsonTypeID = strings.ToLower(jsonTypeID[0:1]) + jsonTypeID[1:]
-		return jsonTypeID
+	jsonTypeID := strings.ToLower(rawTypeName[0:1]) + rawTypeName[1:len(rawTypeName)-5]
+	jsonTypeID = strings.ReplaceAll(jsonTypeID, "camera", "")
+	jsonTypeID = strings.ToLower(jsonTypeID[0:1]) + jsonTypeID[1:]
+	return jsonTypeID
 }
 
 func TestAllProtectEventTypesUnmarshalJSON(t *testing.T) {
-
 	for _, eventObj := range types.AllProtectEvents {
 		jsonEventName := rawTypeNameToJSONEventName(reflect.TypeOf(eventObj).Name())
 		testCase := struct {
-			json        	string
-			jsonEventName 	string
-			eventObj    	interface{}
+			json          string
+			jsonEventName string
+			eventObj      interface{}
 		}{
 			`{
 			  "type": "add",
@@ -51,7 +50,7 @@ func TestAllProtectEventTypesUnmarshalJSON(t *testing.T) {
 			assert.Equal(t, "add", event.Type)
 			assert.Equal(t, testCase.jsonEventName, event.ItemType)
 			assert.Equal(t, reflect.TypeOf(eventObj).String(),
-							reflect.TypeOf(event.Item).String()[1:])
+				reflect.TypeOf(event.Item).String()[1:])
 		})
 	}
 }
