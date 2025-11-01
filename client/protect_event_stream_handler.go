@@ -40,6 +40,9 @@ type ProtectEventStreamHandler struct {
 	sensorClosedEventHandler func(string, *types.SensorClosedEvent)
 	sensorClosedEventMutex   sync.Mutex
 
+	sensorMotionEventHandler func(string, *types.SensorMotionEvent)
+	sensorMotionEventMutex   sync.Mutex
+
 	lightMotionEventHandler func(string, *types.LightMotionEvent)
 	lightMotionEventMutex   sync.Mutex
 
@@ -109,6 +112,8 @@ func (esh *ProtectEventStreamHandler) Process() {
 				go esh.invokeSensorOpenedEventHandler(streamEvent.Type, event)
 			case *types.SensorClosedEvent:
 				go esh.invokeSensorClosedEventHandler(streamEvent.Type, event)
+			case *types.SensorMotionEvent:
+				go esh.invokeSensorMotionEventHandler(streamEvent.Type, event)
 			case *types.LightMotionEvent:
 				go esh.invokeLightMotionEventHandler(streamEvent.Type, event)
 			case *types.CameraMotionEvent:
@@ -258,6 +263,22 @@ func (esh *ProtectEventStreamHandler) invokeSensorClosedEventHandler(eventType s
 
 	if esh.sensorClosedEventHandler != nil {
 		go esh.sensorClosedEventHandler(eventType, event)
+	}
+}
+
+func (esh *ProtectEventStreamHandler) SetSensorMotionEventHandler(handler func(string, *types.SensorMotionEvent)) {
+	esh.sensorMotionEventMutex.Lock()
+	defer esh.sensorMotionEventMutex.Unlock()
+
+	esh.sensorMotionEventHandler = handler
+}
+
+func (esh *ProtectEventStreamHandler) invokeSensorMotionEventHandler(eventType string, event *types.SensorMotionEvent) {
+	esh.sensorMotionEventMutex.Lock()
+	defer esh.sensorMotionEventMutex.Unlock()
+
+	if esh.sensorMotionEventHandler != nil {
+		go esh.sensorMotionEventHandler(eventType, event)
 	}
 }
 

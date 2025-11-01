@@ -44,6 +44,8 @@ func (pe *ProtectEvent) UnmarshalJSON(data []byte) error {
 		pe.Item = &SensorOpenedEvent{}
 	case "sensorClosed":
 		pe.Item = &SensorClosedEvent{}
+	case "sensorMotion":
+		pe.Item = &SensorMotionEvent{}
 	case "lightMotion":
 		pe.Item = &LightMotionEvent{}
 	case "motion":
@@ -57,7 +59,7 @@ func (pe *ProtectEvent) UnmarshalJSON(data []byte) error {
 	case "smartDetectLoiterZone":
 		pe.Item = &CameraSmartDetectLoiterEvent{}
 	default:
-		return fmt.Errorf("type '%s'", pe.Type)
+		return fmt.Errorf("ProtectEvent unrecognized type '%s'", pe.Type)
 	}
 
 	err = json.Unmarshal(pe.RawItem, pe.Item)
@@ -190,6 +192,7 @@ var AllProtectEvents = []interface{}{
 	SensorAlarmEvent{},
 	SensorOpenedEvent{},
 	SensorClosedEvent{},
+	SensorMotionEvent{},
 	LightMotionEvent{},
 	CameraMotionEvent{},
 	CameraSmartDetectAudioEvent{},
@@ -248,7 +251,7 @@ func (pde *ProtectDeviceEvent) UnmarshalJSON(data []byte) error {
 	case "linkStation":
 		pde.Item = &ProtectLinkStationEvent{}
 	default:
-		return fmt.Errorf("model key '%s'", pde.ModelKey)
+		return fmt.Errorf("ProtectDeviceEvent unrecognized type '%s'", pde.ModelKey)
 	}
 
 	err = json.Unmarshal(pde.RawItem, pde.Item)
