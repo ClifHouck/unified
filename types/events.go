@@ -51,15 +51,15 @@ func (pe *ProtectEvent) UnmarshalJSON(data []byte) error {
 	case "motion":
 		pe.Item = &CameraMotionEvent{}
 	case "smartAudioDetect":
-		pe.Item = &CameraSmartDetectAudioEvent{}
+		pe.Item = &CameraSmartAudioDetectEvent{}
 	case "smartDetectZone":
 		pe.Item = &CameraSmartDetectZoneEvent{}
 	case "smartDetectLine":
 		pe.Item = &CameraSmartDetectLineEvent{}
 	case "smartDetectLoiterZone":
-		pe.Item = &CameraSmartDetectLoiterEvent{}
+		pe.Item = &CameraSmartDetectLoiterZoneEvent{}
 	default:
-		return fmt.Errorf("ProtectEvent unrecognized type '%s'", pe.Type)
+		return fmt.Errorf("ProtectEvent unrecognized type '%s'", item.Type)
 	}
 
 	err = json.Unmarshal(pe.RawItem, pe.Item)
@@ -163,7 +163,7 @@ type CameraMotionEvent struct {
 	} `json:"metadata"`
 }
 
-type CameraSmartDetectAudioEvent struct {
+type CameraSmartAudioDetectEvent struct {
 	ProtectEventItem
 	SmartDetectTypes []string `json:"smartDetectTypes"`
 }
@@ -178,7 +178,7 @@ type CameraSmartDetectLineEvent struct {
 	SmartDetectTypes []string `json:"smartDetectTypes"`
 }
 
-type CameraSmartDetectLoiterEvent struct {
+type CameraSmartDetectLoiterZoneEvent struct {
 	ProtectEventItem
 	SmartDetectTypes []string `json:"smartDetectTypes"`
 }
@@ -195,10 +195,10 @@ var AllProtectEvents = []interface{}{
 	SensorMotionEvent{},
 	LightMotionEvent{},
 	CameraMotionEvent{},
-	CameraSmartDetectAudioEvent{},
+	CameraSmartAudioDetectEvent{},
 	CameraSmartDetectZoneEvent{},
 	CameraSmartDetectLineEvent{},
-	CameraSmartDetectLoiterEvent{},
+	CameraSmartDetectLoiterZoneEvent{},
 }
 
 type ProtectDeviceEvent struct {
