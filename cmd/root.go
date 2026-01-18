@@ -103,10 +103,17 @@ func getAPIKey() string {
 		return viper.GetString("UNIFI_API_KEY")
 	} else if viper.IsSet("apiKey") {
 		log.Debug("UniFi API key set from configuration file.")
-		return viper.GetString("apiKey")
+		return viper.GetString("apikey")
 	}
 	log.Fatal("Couldn't retrieve API key from configuration.")
 	return ""
+}
+
+func getConfigValuesFromViper() {
+	apiKey = getAPIKey()
+	hostname = viper.GetString("host")
+	keepAliveInterval = viper.GetDuration("keepAliveInterval")
+	insecureSkipVerify = viper.GetBool("insecure")
 }
 
 func tryReadConfig(filename string) bool {
@@ -135,17 +142,17 @@ func initConfig() {
 		log.Fatal(err.Error())
 	}
 
-	err = viper.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host"))
+	err = viper.BindPFlag("host", rootCmd.Flags().Lookup("host"))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	err = viper.BindPFlag("keepAliveInterval", rootCmd.PersistentFlags().Lookup("keep-alive-interval"))
+	err = viper.BindPFlag("keepAliveInterval", rootCmd.Flags().Lookup("keep-alive-interval"))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	err = viper.BindPFlag("insecure", rootCmd.PersistentFlags().Lookup("insecure"))
+	err = viper.BindPFlag("insecure", rootCmd.Flags().Lookup("insecure"))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -163,10 +170,7 @@ func initConfig() {
 				"file": cfgFile,
 			}).Debug("Unified config file loaded")
 
-			apiKey = getAPIKey()
-			hostname = viper.GetString("host")
-			keepAliveInterval = viper.GetDuration("keepAliveInterval")
-			insecureSkipVerify = viper.GetBool("insecure")
+			getConfigValuesFromViper()
 			return
 		}
 	}
@@ -184,10 +188,7 @@ func initConfig() {
 		"file": viper.ConfigFileUsed(),
 	}).Debug("Unified config file loaded")
 
-	apiKey = getAPIKey()
-	hostname = viper.GetString("host")
-	keepAliveInterval = viper.GetDuration("keepAliveInterval")
-	insecureSkipVerify = viper.GetBool("insecure")
+	getConfigValuesFromViper()
 
 	logConfig()
 }
