@@ -1,4 +1,4 @@
-package cmd
+package cmd //nolint:testpackage // Testing internal config loading implementation
 
 import (
 	"os"
