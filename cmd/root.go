@@ -109,6 +109,13 @@ func getAPIKey() string {
 	return ""
 }
 
+func getConfigValuesFromViper() {
+	apiKey = getAPIKey()
+	hostname = viper.GetString("host")
+	keepAliveInterval = viper.GetDuration("keepAliveInterval")
+	insecureSkipVerify = viper.GetBool("insecure")
+}
+
 func tryReadConfig(filename string) bool {
 	inFile, err := os.Open(filename)
 	if err != nil {
@@ -163,7 +170,7 @@ func initConfig() {
 				"file": cfgFile,
 			}).Debug("Unified config file loaded")
 
-			apiKey = getAPIKey()
+			getConfigValuesFromViper()
 			return
 		}
 	}
@@ -181,7 +188,7 @@ func initConfig() {
 		"file": viper.ConfigFileUsed(),
 	}).Debug("Unified config file loaded")
 
-	apiKey = getAPIKey()
+	getConfigValuesFromViper()
 
 	logConfig()
 }
